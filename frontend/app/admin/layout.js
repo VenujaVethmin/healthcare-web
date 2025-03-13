@@ -1,6 +1,6 @@
 
 import Navbar from "@/components/DoctorComponents/navbar";
-import Sidebar from "@/components/DoctorComponents/sidebar";
+import Sidebar from "@/components/AdminComponents/sidebar";
 
 export default function RootLayout({ children }) {
   return (
