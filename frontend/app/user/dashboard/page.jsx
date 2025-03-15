@@ -135,7 +135,10 @@ export default function DashboardPage() {
               <p className="text-[#82889c] text-sm">Latest medications</p>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/user/prescriptions" className="flex items-center gap-1 text-sm text-[#3a99b7] hover:text-[#2d7a93]">
+              <Link
+                href="/user/prescriptions"
+                className="flex items-center gap-1 text-sm text-[#3a99b7] hover:text-[#2d7a93]"
+              >
                 Show All
                 <ChevronRight className="w-4 h-4" />
               </Link>
@@ -202,7 +205,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-[#82889c]">Schedule a new visit</p>
               </button>
             </Link>
-            <Link href="/user/records">
+            <Link href="/user/medical-records">
               <button className="w-full p-4 rounded-lg border border-[#e2e2e2] hover:border-[#3a99b7] hover:bg-[#f8f7fe] transition-colors text-left">
                 <FileText className="w-5 h-5 text-[#3a99b7] mb-2" />
                 <h3 className="font-medium text-[#232323]">View Records</h3>
