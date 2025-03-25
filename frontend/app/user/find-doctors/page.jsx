@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, Clock, MapPin, Star, Filter, ChevronDown } from "lucide-react";
+import Link from "next/link";
 
 export default function DoctorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -263,9 +264,9 @@ export default function DoctorsPage() {
               </div>
 
               {/* Book Button */}
-              <button className="w-full p-2.5 bg-[#3a99b7] rounded-lg text-white text-sm font-medium hover:bg-[#2d7a93] transition-colors">
+              <Link href={"/user/booking"} className="w-full p-2.5 bg-[#3a99b7] rounded-lg text-white text-sm font-medium hover:bg-[#2d7a93] transition-colors">
                 Book Appointment
-              </button>
+              </Link>
             </div>
           </div>
         ))}

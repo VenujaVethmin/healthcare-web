@@ -7,7 +7,7 @@ import Link from "next/link";
 export default function EditProfilePage() {
   const [formData, setFormData] = useState({
     name: "Stevan dux",
-    role: "Gastro Doctor",
+    
     email: "stevan@gmail.com",
     phone: "+ 1 2387428345",
     location: "United States",
@@ -103,19 +103,7 @@ export default function EditProfilePage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[#82889c] text-sm" htmlFor="role">
-                Role
-              </label>
-              <input
-                type="text"
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7] text-[#434966]"
-              />
-            </div>
+          
 
             <div className="space-y-2">
               <label className="text-[#82889c] text-sm" htmlFor="dob">
@@ -145,19 +133,7 @@ export default function EditProfilePage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[#82889c] text-sm" htmlFor="email">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7] text-[#434966]"
-              />
-            </div>
+           
 
             <div className="space-y-2">
               <label className="text-[#82889c] text-sm" htmlFor="location">
@@ -188,64 +164,7 @@ export default function EditProfilePage() {
           />
         </div>
 
-        {/* Medical History */}
-        <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6 space-y-4">
-          <h3 className="text-[#434966] text-lg font-semibold">
-            Medical History
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label
-                className="text-[#82889c] text-sm"
-                htmlFor="diseases.speech"
-              >
-                Speech
-              </label>
-              <input
-                type="text"
-                id="diseases.speech"
-                name="diseases.speech"
-                value={formData.diseases.speech}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7] text-[#434966]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                className="text-[#82889c] text-sm"
-                htmlFor="diseases.hearing"
-              >
-                Hearing
-              </label>
-              <input
-                type="text"
-                id="diseases.hearing"
-                name="diseases.hearing"
-                value={formData.diseases.hearing}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7] text-[#434966]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                className="text-[#82889c] text-sm"
-                htmlFor="diseases.physical"
-              >
-                Physical
-              </label>
-              <input
-                type="text"
-                id="diseases.physical"
-                name="diseases.physical"
-                value={formData.diseases.physical}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7] text-[#434966]"
-              />
-            </div>
-          </div>
-        </div>
+        
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">

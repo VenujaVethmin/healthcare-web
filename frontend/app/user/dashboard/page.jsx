@@ -21,7 +21,7 @@ export default function DashboardPage() {
       specialty: "Cardiologist",
       date: "2024-03-08",
       time: "10:30 AM",
-      location: "Medical Center, Room 305",
+      room: "001",
       status: "confirmed",
     },
     {
@@ -30,7 +30,7 @@ export default function DashboardPage() {
       specialty: "Neurologist",
       date: "2024-03-10",
       time: "2:15 PM",
-      location: "Health Hub, Room 102",
+      room: "102",
       status: "pending",
     },
   ];
@@ -118,7 +118,7 @@ export default function DashboardPage() {
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-[#82889c] mt-0.5" />
                 <span className="text-sm text-[#232323]">
-                  {upcomingAppointments[0].location}
+                 Room {upcomingAppointments[0].room}
                 </span>
               </div>
             </div>

@@ -11,8 +11,14 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import useSession from "@/hooks/session";
 
 export default function Navbar() {
+
+
+  const { user, isLoading, error } = useSession();
+
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const notifications = [
@@ -90,7 +96,7 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-2">
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium text-[#232323]">
-                      Stevan Dux
+                      {user?.name}
                     </span>
                     <span className="text-xs text-[#82889c]">Doctor</span>
                   </div>

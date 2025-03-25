@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  name     String?
+  email    String  @unique
+  image    String?
+  role     Role    @default(PATIENT)
+  userProfile UserProfile?
+  doctorProfile DoctorProfile?
+  doctorAppointments  Appointment[] @relation("Doctor")
+  patientAppointments Appointment[] @relation("Patient")
+  doctorBookingDetails DoctorBookingDetails?
+
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  PHARMACIST
+  ADMIN
+}
+
+
+model UserProfile{
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  phone     String?
+  address  String?
+  dob       DateTime?
+  age       Int?
+  bio       String?
+}
+
+model DoctorProfile{
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  specialty    String?
+  experience   String?
+  education    String?
+  availability String?
+}
+
+model Appointment{
+  id           String   @id @default(cuid())
+  doctorId     String
+  doctor      User     @relation("Doctor",fields: [doctorId], references: [id])
+  patientId    String
+  patient      User     @relation("Patient" ,fields: [patientId], references: [id])
+  specialty    String?
+  number       Int?
+  room         String?
+  date         DateTime?
+  time         DateTime?
+  status       AppointmentStatus @default(Scheduled)
+  contact      String?
+  paid         Boolean? @default(false)
+  ConsultationFee  Float?
+  createdAt    DateTime @default(now())
+
+}
+
+enum AppointmentStatus {
+
+  Scheduled
+  COMPLETED
+}
+
+
+
+model DoctorBookingDetails {
+  id                   String   @id @default(cuid())
+  doctorId             String   @unique
+  doctor               User     @relation(fields: [doctorId], references: [id])
+  specialty            String?
+  appointmentDuration  Int?
+  maxPatientsPerDay    Int?
+  consultationFee      Float?
+  isPublished          Boolean? @default(false)
+  createdAt            DateTime @default(now())
+
+  workingHours         WorkingHour[]
+}
+
+model WorkingHour {
+  id        String   @id @default(cuid())
+  day       DayOfWeek
+  startTime String   @default("09:00")  // Stored as "HH:mm"
+  endTime   String   @default("17:00")  // Stored as "HH:mm"
+  isWorking Boolean  @default(true)
+  doctorBookingDetails DoctorBookingDetails @relation(fields: [doctorBookingDetailsId], references: [id])
+  doctorBookingDetailsId String
+}
+
+
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}

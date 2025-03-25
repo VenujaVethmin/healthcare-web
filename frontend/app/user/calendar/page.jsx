@@ -23,7 +23,7 @@ export default function PatientAppointmentsPage() {
         id: 1,
         doctorName: "Dr. Sarah Connor",
         specialty: "Cardiologist",
-        hospital: "Medical Center",
+        room: "003",
         time: "10:30 AM",
         reason: "Regular Checkup",
         status: "upcoming",
@@ -35,7 +35,7 @@ export default function PatientAppointmentsPage() {
         id: 2,
         doctorName: "Dr. John Smith",
         specialty: "Neurologist",
-        hospital: "City Hospital",
+        room: "001",
         time: "2:15 PM",
         reason: "Follow-up",
         status: "scheduled",
@@ -47,7 +47,7 @@ export default function PatientAppointmentsPage() {
         id: 3,
         doctorName: "Dr. Emily Wilson",
         specialty: "Dermatologist",
-        hospital: "Skin Care Center",
+        room: "002",
         date: format(addDays(new Date(), 3), "yyyy-MM-dd"),
         time: "3:30 PM",
         reason: "Consultation",
@@ -99,7 +99,7 @@ export default function PatientAppointmentsPage() {
             <div className="flex items-center gap-2 mt-1">
               <Building className="w-4 h-4 text-[#82889c]" />
               <span className="text-sm text-[#232323]">
-                {appointment.hospital}
+                {appointment.room}
               </span>
             </div>
             <div className="flex items-center gap-2 mt-1">

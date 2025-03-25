@@ -11,6 +11,11 @@ import Link from "next/link";
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleGoogleLogin = () => {
+    console.log("Google Sign-In Button Clicked"); // Debugging
+    window.location.href = "http://localhost:3001/auth/google";
+  };
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Section - Decorative */}
@@ -65,7 +70,6 @@ export default function LoginPage() {
         className="flex-1 flex items-center justify-center p-6 lg:p-12"
       >
         <div className="w-full max-w-md space-y-8">
-          <p>home page here   <Link href={"/"}>[click]</Link></p>
           <div className="text-center">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-[#3a99b7] to-[#2d7a93] bg-clip-text text-transparent">
               Sign in to your account
@@ -81,7 +85,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-6">
+          {/* Prevent form submission from refreshing the page */}
+          <form className="mt-8 space-y-6" onSubmit={(e) => e.preventDefault()}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -135,7 +140,6 @@ export default function LoginPage() {
 
             <div className="space-y-4">
               <Button className="w-full h-11 bg-gradient-to-r from-[#3a99b7] to-[#2d7a93] text-white hover:from-[#2d7a93] hover:to-[#3a99b7]">
-              
                 Sign in
               </Button>
 
@@ -151,13 +155,20 @@ export default function LoginPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <Button variant="outline" className="w-full">
+                {/* Google Login Button */}
+                <Button
+                  onClick={handleGoogleLogin}
+                  variant="outline"
+                  className="w-full"
+                >
                   <img
                     src="https://authjs.dev/img/providers/google.svg"
                     alt="Google"
                     className="w-5 h-5"
                   />
                 </Button>
+
+                {/* Apple Login Button */}
                 <Button variant="outline" className="w-full">
                   <img
                     src="https://authjs.dev/img/providers/apple.svg"
@@ -165,6 +176,8 @@ export default function LoginPage() {
                     className="w-5 h-5"
                   />
                 </Button>
+
+                {/* GitHub Login Button */}
                 <Button variant="outline" className="w-full">
                   <img
                     src="https://authjs.dev/img/providers/github.svg"

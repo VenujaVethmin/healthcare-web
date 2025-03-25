@@ -21,7 +21,7 @@ const todaysAppointments = [
     status: "upcoming",
     age: "45",
     gender: "Male",
-    reason: "Regular Checkup",
+    number: 6,
   },
   {
     id: 2,
@@ -30,7 +30,7 @@ const todaysAppointments = [
     status: "completed",
     age: "28",
     gender: "Female",
-    reason: "Follow-up",
+    number: 4,
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const todaysAppointments = [
     status: "upcoming",
     age: "35",
     gender: "Male",
-    reason: "Consultation",
+    number: 3,
   },
 ];
 
@@ -212,7 +212,7 @@ export default function DoctorDashboard() {
         </div>
 
         <div className="space-y-4">
-          {todaysAppointments.map((appointment) => (
+          {todaysAppointments.sort().map((appointment) => (
             <motion.div
               key={appointment.id}
               initial={{ opacity: 0, y: 20 }}
@@ -233,7 +233,7 @@ export default function DoctorDashboard() {
                         {appointment.age} years • {appointment.gender}
                       </p>
                       <p className="text-sm text-[#82889c] mt-1">
-                        Reason: {appointment.reason}
+                        Number: {appointment.number}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="w-4 h-4 text-[#82889c]" />
