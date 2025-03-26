@@ -124,8 +124,42 @@ export const doctorSchedule = async (req, res) => {
   }
 };
 
+export const updateDoctorSchedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { workingHours, appointmentDuration, maxPatientsPerDay, consultationFee } = req.body;
 
+    // Update doctor booking details
+    const updatedDoctor = await prisma.$transaction(async (prisma) => {
+      // Update main doctor booking details
+      const doctorBooking = await prisma.doctorBookingDetails.update({
+        where: { id },
+        data: {
+          appointmentDuration,
+          maxPatientsPerDay,
+          consultationFee,
+        },
+      });
 
+      // Update working hours
+      for (const hour of workingHours) {
+        await prisma.workingHour.update({
+          where: { id: hour.id },
+          data: {
+            startTime: hour.startTime,
+            endTime: hour.endTime,
+            isWorking: hour.isWorking,
+          },
+        });
+      }
 
+      return doctorBooking;
+    });
+
+    res.json({ success: true, data: updatedDoctor });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 

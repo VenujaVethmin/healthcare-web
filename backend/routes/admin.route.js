@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { doctorList, doctorSchedule, findUserByEmail, makeDoctor } from "../controllers/admin.controller.js";
+import { doctorList, doctorSchedule, findUserByEmail, makeDoctor, updateDoctorSchedule } from "../controllers/admin.controller.js";
 
 
 
@@ -11,6 +11,7 @@ adminRoute.get("/getDoctorSchedule", doctorSchedule);
 adminRoute.get("/getUserById/:email", findUserByEmail);
 
 adminRoute.post("/changeRole", makeDoctor);
+adminRoute.put("/updateDoctorSchedule/:id", updateDoctorSchedule);
 
 
 
