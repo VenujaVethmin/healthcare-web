@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { doctorList, findUserByEmail, makeDoctor } from "../controllers/admin.controller.js";
+import { doctorList, doctorSchedule, findUserByEmail, makeDoctor } from "../controllers/admin.controller.js";
 
 
 
 const adminRoute = Router();
 
 adminRoute.get("/getDoctors", doctorList);
+adminRoute.get("/getDoctorSchedule", doctorSchedule);
 
 adminRoute.get("/getUserById/:email", findUserByEmail);
 

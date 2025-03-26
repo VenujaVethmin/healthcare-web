@@ -1,8 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Learn more: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -24,7 +21,6 @@ model User {
   doctorAppointments  Appointment[] @relation("Doctor")
   patientAppointments Appointment[] @relation("Patient")
   doctorBookingDetails DoctorBookingDetails?
-
 }
 
 enum Role {
@@ -34,19 +30,18 @@ enum Role {
   ADMIN
 }
 
-
-model UserProfile{
+model UserProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   phone     String?
-  address  String?
+  address   String?
   dob       DateTime?
   age       Int?
   bio       String?
 }
 
-model DoctorProfile{
+model DoctorProfile {
   id           String   @id @default(cuid())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id])
@@ -56,12 +51,12 @@ model DoctorProfile{
   availability String?
 }
 
-model Appointment{
+model Appointment {
   id           String   @id @default(cuid())
   doctorId     String
-  doctor      User     @relation("Doctor",fields: [doctorId], references: [id])
+  doctor       User     @relation("Doctor", fields: [doctorId], references: [id])
   patientId    String
-  patient      User     @relation("Patient" ,fields: [patientId], references: [id])
+  patient      User     @relation("Patient", fields: [patientId], references: [id])
   specialty    String?
   number       Int?
   room         String?
@@ -70,18 +65,14 @@ model Appointment{
   status       AppointmentStatus @default(Scheduled)
   contact      String?
   paid         Boolean? @default(false)
-  ConsultationFee  Float?
+  consultationFee Float?
   createdAt    DateTime @default(now())
-
 }
 
 enum AppointmentStatus {
-
   Scheduled
   COMPLETED
 }
-
-
 
 model DoctorBookingDetails {
   id                   String   @id @default(cuid())
@@ -94,7 +85,8 @@ model DoctorBookingDetails {
   isPublished          Boolean? @default(false)
   createdAt            DateTime @default(now())
 
-  workingHours         WorkingHour[]
+  // One-to-many relationship with WorkingHour
+  workingHours         WorkingHour[] @relation("DoctorBookingHours")
 }
 
 model WorkingHour {
@@ -103,11 +95,11 @@ model WorkingHour {
   startTime String   @default("09:00")  // Stored as "HH:mm"
   endTime   String   @default("17:00")  // Stored as "HH:mm"
   isWorking Boolean  @default(true)
-  doctorBookingDetails DoctorBookingDetails @relation(fields: [doctorBookingDetailsId], references: [id])
+
+  // Foreign key reference to DoctorBookingDetails
   doctorBookingDetailsId String
+  doctorBookingDetails DoctorBookingDetails @relation("DoctorBookingHours", fields: [doctorBookingDetailsId], references: [id])
 }
-
-
 
 enum DayOfWeek {
   SUNDAY

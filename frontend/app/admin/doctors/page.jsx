@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Search, UserPlus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import axiosInstance from "@/lib/axiosInstance";
+import useSWR from "swr";
 
 const usersList = [
   {
@@ -21,28 +23,41 @@ const usersList = [
   },
 ];
 
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
+
 export default function DoctorsManagement() {
   const [emailSearch, setEmailSearch] = useState("");
   const [users, setUsers] = useState(usersList);
   const [showSearchResult, setShowSearchResult] = useState(false);
+ const[searchedUser , setSearchedUser] = useState(null);
+  
+  
 
-  const searchedUser = users.find(
-    (user) =>
-      user.email.toLowerCase() === emailSearch.toLowerCase() && !user.isDoctor
-  );
+  
+   const { data : doctors, error, isLoading } = useSWR("/admin/getDoctors", fetcher);
 
-  const doctors = users.filter((user) => user.isDoctor);
 
-  const handleSearch = () => {
+  // const doctors = users.filter((user) => user.isDoctor);
+
+  const handleSearch = async () => {
+    const res = await axiosInstance.get(
+      `/admin/getUserById/${emailSearch}`
+    );
+    console.log(res.data);
+    setSearchedUser(res.data);
+
     setShowSearchResult(true);
   };
 
-  const handleMakeDoctor = (userId) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId ? { ...user, isDoctor: true } : user
-      )
-    );
+  const handleMakeDoctor = async () => {
+    
+    const res = await axiosInstance.post("/admin/changeRole", {
+      userId: searchedUser.id,
+    });
+    window.alert("User has been converted to doctor successfully");
+    console.log(res.data);
+    setUsers([...users, searchedUser]);
+    setSearchedUser(null);
     setEmailSearch("");
     setShowSearchResult(false);
   };
@@ -138,7 +153,7 @@ export default function DoctorsManagement() {
       {/* Doctors List */}
       <div className="bg-white rounded-xl border border-black/10 p-6">
         <h2 className="text-lg font-medium text-[#232323] mb-4">
-          Doctors List ({doctors.length})
+          Doctors List ({doctors?.length})
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -153,16 +168,14 @@ export default function DoctorsManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#82889c] uppercase tracking-wider">
                   Specialization
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#82889c] uppercase tracking-wider">
-                  Location
-                </th>
+                
                 <th className="px-6 py-3 text-right text-xs font-medium text-[#82889c] uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {doctors.map((doctor) => (
+              {doctors?.map((doctor) => (
                 <motion.tr
                   key={doctor.id}
                   initial={{ opacity: 0 }}
@@ -182,11 +195,7 @@ export default function DoctorsManagement() {
                       {doctor.specialization || "-"}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-[#82889c]">
-                      {doctor.location || "-"}
-                    </div>
-                  </td>
+                  
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <button
                       onClick={() => handleDeleteDoctor(doctor.id)}
@@ -197,7 +206,7 @@ export default function DoctorsManagement() {
                   </td>
                 </motion.tr>
               ))}
-              {doctors.length === 0 && (
+              {doctors?.length === 0 && (
                 <tr>
                   <td
                     colSpan={5}

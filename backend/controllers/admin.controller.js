@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
+
 const prisma = new PrismaClient();
 
 
@@ -9,12 +10,10 @@ export const findUserByEmail = async (req, res) => {
     const { email } = req.params;
 
     const user = await prisma.user.findFirst({
-      where: { email, role: "PATIENT" },
+      where: { email: email.toLowerCase(), role: "PATIENT" },
     });
 
-    if (!user) {
-      return res.status(404).json({ message: "Patient not found" });
-    }
+   
 
     res.json(user);
   } catch (error) {
@@ -39,9 +38,7 @@ export const doctorList = async (req, res) => {
 
 export const makeDoctor = async (req, res) => {
   try {
-    const {
-      userId
-    } = req.body;
+    const { userId } = req.body;
 
     const daysOfWeek = [
       "SUNDAY",
@@ -72,16 +69,17 @@ export const makeDoctor = async (req, res) => {
         },
       });
 
-      // Create working hours for the doctor
+      // Create working hours for the doctor with doctorBookingDetailsId
       const workingHoursData = daysOfWeek.map((day) => ({
         day,
+        doctorBookingDetailsId: doctorBooking.id, // ✅ Foreign key included
       }));
 
-      const workingHours = await prisma.workingHour.createMany({
+      await prisma.workingHour.createMany({
         data: workingHoursData,
       });
 
-      return { user, doctorBooking, workingHours };
+      return { user, doctorBooking, workingHours: workingHoursData };
     });
 
     res.json(result);
@@ -89,6 +87,7 @@ export const makeDoctor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 export const deleteDoctor = async (req, res) => {
@@ -107,46 +106,26 @@ export const deleteDoctor = async (req, res) => {
 
 
 
+//get doctors shedules details
 
 
-
-
-//create and update doctor schedule
 export const doctorSchedule = async (req, res) => {
   try {
-    const doctorBooking = await prisma.doctorBookingDetails.create({
-      data: {
-        doctorId: "cm8ocim2j0000ibu8jba6eghq",
-        specialty: "hi",
-        appointmentDuration: 15,
-        maxPatientsPerDay: 20,
-        consultationFee: 2500,
-        isPublished: false,
+    const doctors = await prisma.doctorBookingDetails.findMany({
+      include: {
+        workingHours: true,
+        doctor: true,
+        
       },
     });
-
-    const daysOfWeek = [
-      "SUNDAY",
-      "MONDAY",
-      "TUESDAY",
-      "WEDNESDAY",
-      "THURSDAY",
-      "FRIDAY",
-      "SATURDAY",
-    ];
-
-    const workingHoursData = daysOfWeek.map((day) => ({
-      day,
-    }));
-
-    const workingHours = await prisma.$transaction(
-      workingHoursData.map((wh) => prisma.workingHour.create({ data: wh }))
-    );
-
-    res.json({ message: "Doctor and working hours created!" });
+    res.json(doctors);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+
 
 
