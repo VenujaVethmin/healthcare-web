@@ -6,6 +6,7 @@ const nextConfig = {
       "authjs.dev",
       "raw.githubusercontent.com",
       "i.pravatar.cc",
+      "lh3.googleusercontent.com",
     ],
   },
 };

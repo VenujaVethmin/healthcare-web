@@ -213,10 +213,7 @@ export default function DoctorsManagement() {
 
               {/* Doctor Info */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-[#82889c]">
-                  <MapPin className="w-4 h-4" />
-                  <span>{doctor.location}</span>
-                </div>
+                
                 <div className="flex items-center gap-2 text-sm text-[#82889c]">
                   <CalendarDays className="w-4 h-4" />
                   <span>{doctor.appointmentsToday} appointments today</span>
@@ -267,18 +264,8 @@ export default function DoctorsManagement() {
                   {doctor.isPublished ? "Published" : "Unpublished"}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedDoctor(doctor)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Edit className="w-4 h-4 text-[#82889c]" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteDoctor(doctor.id)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
+                
+                  
                 </div>
               </div>
             </div>

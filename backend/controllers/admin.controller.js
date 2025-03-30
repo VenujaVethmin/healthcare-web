@@ -3,7 +3,34 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-
+export const adminDashboard = async(req,res) =>{
+  try {
+    const data = await prisma.user.findMany({
+      where:{
+        role: "DOCTOR"
+      },
+      include : {
+        doctorProfile: {
+          select : {
+            education: true,
+            specialty: true,
+            
+          }
+        }
+        ,
+        doctorBookingDetails: {
+          select : {
+            consultationFee: true,
+            isPublished: true,
+          }
+        }
+      }
+    });
+      res.json(data);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+}
 
 export const findUserByEmail = async (req, res) => {
   try {

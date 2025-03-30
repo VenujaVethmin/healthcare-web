@@ -245,7 +245,15 @@ export default function DoctorDashboard() {
                   </div>
 
                   {appointment.status === "upcoming" && (
-                    <button
+                    <div className={"space-x-2"}>
+                      <button
+                      className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+                     
+                      >
+                      View Profile
+                     </button>
+
+                     <button
                       className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
                       onClick={() =>
                         setExpandedAppointment(
@@ -259,6 +267,7 @@ export default function DoctorDashboard() {
                         ? "Close"
                         : "Start"}
                     </button>
+                    </div>
                   )}
                 </div>
               </div>

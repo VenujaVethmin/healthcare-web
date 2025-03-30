@@ -19,7 +19,7 @@ const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 export default function ProfilePage() {
 
    const { data, error, isLoading } = useSWR("/user/profile", fetcher);
-   console.log(data?.user.name);
+  //  console.log(data?.user.name);
 
 
   const [activeTab, setActiveTab] = useState("general");

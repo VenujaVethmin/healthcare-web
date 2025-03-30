@@ -9,6 +9,7 @@
 import userRoute from "./routes/user.route.js";
 import doctorRoute from "./routes/doctor.route.js";
 import adminRoute from "./routes/admin.route.js";
+import testRoute from "./routes/test.route.js";
   dotenv.config();
 
   const app = express();
@@ -124,6 +125,7 @@ app.use(
   app.use("/api/user", userRoute);
   app.use("/api/doctor", doctorRoute);
   app.use("/api/admin", adminRoute);
+    app.use("/api/test", testRoute);
 
 
   app.listen(3001, () => {
