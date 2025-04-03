@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { test } from "../controllers/test.controller.js";
+import { getUserBooking } from "../controllers/test.controller.js";
 
 
 const testRoute = Router();
 
-testRoute.post("/test", test);
+testRoute.get("/test/:id", getUserBooking);
 
 
 export default testRoute;

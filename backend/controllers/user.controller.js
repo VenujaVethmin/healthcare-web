@@ -64,99 +64,264 @@ export const findDoctors = async (req, res) => {
   }
 };
 
+
 export const getUserBooking = async (req, res) => {
   try {
+    const { date } = req.body;
     const doctorId = req.params.id;
+
+    // If no date provided, return doctor details only
+    if (!date) {
+      const doctor = await prisma.doctorBookingDetails.findUnique({
+        where: {
+          doctorId: doctorId,
+        },
+        select: {
+          workingHours: true,
+          doctor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              role: true,
+            },
+          },
+          consultationFee: true,
+          specialty: true,
+          maxPatientsPerDay: true,
+        },
+      });
+
+      return res.json({ doctor });
+    }
+
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay();
+    const daysOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const day = daysOfWeek[dayOfWeek];
+
+    // Get doctor details with working hours for specific day
     const doctor = await prisma.doctorBookingDetails.findUnique({
       where: {
         doctorId: doctorId,
       },
-      include: {
-        workingHours: true,
-        doctor: true,
+      select: {
+        workingHours: {
+          where: {
+            day: day,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+          },
+        },
+        consultationFee: true,
+        specialty: true,
+        maxPatientsPerDay: true,
       },
     });
 
-    if (!doctor) {
-      return res.status(404).json({ error: "Doctor not found" });
+    // Check if doctor works on this day
+    if (!doctor.workingHours.length || !doctor.workingHours[0].isWorking) {
+      return res
+        .status(400)
+        .json({ error: "Doctor is not available on this day" });
     }
 
-    res.json(doctor);
+    // Get appointments for the day
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        doctorId: doctorId,
+        date: {
+          gte: new Date(dateObj.setHours(0, 0, 0, 0)),
+          lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+        },
+      },
+      orderBy: {
+        time: "asc",
+      },
+    });
+
+    // If no appointments yet, return start time
+    if (appointments.length === 0) {
+      const estimatedTime = doctor.workingHours[0].startTime;
+      return res.json({ doctor, estimatedTime });
+    }
+
+    // If appointments exist, calculate next available time
+    const lastAppointment = appointments[appointments.length - 1];
+    const lastTime = new Date(lastAppointment.time);
+    lastTime.setMinutes(lastTime.getMinutes() + 15); // Add 15 minutes for next slot
+
+    const estimatedTime = `${lastTime
+      .getHours()
+      .toString()
+      .padStart(2, "0")}:${lastTime.getMinutes().toString().padStart(2, "0")}`;
+
+    res.json({ doctor, estimatedTime });
   } catch (error) {
     console.error("Error fetching doctor:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-// export const createAppointment = async (
-//   doctorId,
-//   patientId,
-//   date,
-//   consultationFee
-// ) => {
-//   try {
-//     // Convert date to a Date object if it's passed as a string
-//     const dateObj = new Date(date);
+export const bookAppointment = async (req, res) => {
+  try {
+    const { date, doctorId } = req.body;
 
-//     // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-//     const dayOfWeek = dateObj.getDay();
+    // Validate required fields
+    if (!date || !doctorId) {
+      return res.status(400).json({ error: "Date and doctorId are required" });
+    }
 
-//     // Convert the dayOfWeek to a readable format
-//     const daysOfWeek = [
-//       "SUNDAY",
-//       "MONDAY",
-//       "TUESDAY",
-//       "WEDNESDAY",
-//       "THURSDAY",
-//       "FRIDAY",
-//       "SATURDAY",
-//     ];
-//     const day = daysOfWeek[dayOfWeek];
+    // Use authenticated user's ID when available
+    const patientId = req.user?.id || "cm8okqt7o0000ibo0gakxj8cr";
 
-//     // Find the working hours for the doctor on that specific day
-//     const doctorDetails = await prisma.doctorBookingDetails.findUnique({
-//       where: { doctorId: doctorId },
-//       include: {
-//         workingHours: {
-//           where: {
-//             day: day, // Use the day of the week
-//           },
-//         },
-//       },
-//     });
+    // Parse and validate date
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
 
-//     if (!doctorDetails || doctorDetails.workingHours.length === 0) {
-//       throw new Error("No working hours available for the doctor on this day.");
-//     }
+    // Get day of week
+    const daysOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const day = daysOfWeek[dateObj.getDay()];
 
-//     // Get the start time for the doctor on that day (assuming there's only one working hour entry)
-//     const startTimeString = doctorDetails.workingHours[0].startTime; // "HH:mm" format
+    // Fetch doctor details with working hours
+    const doctorDetails = await prisma.doctorBookingDetails.findUnique({
+      where: { doctorId },
+      select: {
+        workingHours: {
+          where: { day },
+        },
+        maxPatientsPerDay: true,
+      },
+    });
 
-//     // Combine the start time with the current date (use today's date but with the start time)
-//     const [hours, minutes] = startTimeString.split(":").map(Number);
-//     const startTimeDate = new Date(dateObj); // Start with the current date
-//     startTimeDate.setHours(hours); // Set the hours
-//     startTimeDate.setMinutes(minutes); // Set the minutes
+    if (!doctorDetails) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
 
-//     // Now, you have the complete Date object with the start time
-//     console.log("Appointment Start Time:", startTimeDate);
+    if (!doctorDetails.workingHours.length) {
+      return res.status(400).json({
+        error: "Doctor is not available on this day",
+      });
+    }
 
-//     // Proceed with creating the appointment using the extracted startTime
-//     const appointment = await prisma.appointment.create({
-//       data: {
-//         doctorId: doctorId,
-//         patientId: patientId,
-//         date: date,
-//         startTime: startTimeDate,
-//         consultationFee: consultationFee,
-//       },
-//     });
+    // Check appointment capacity
+    const maxPatients = parseInt(doctorDetails.maxPatientsPerDay, 10);
+    if (!maxPatients || maxPatients <= 0) {
+      return res.status(500).json({
+        error: "Invalid maximum patients configuration",
+      });
+    }
 
-//     return appointment;
-//   } catch (error) {
-//     console.error("Error creating appointment:", error);
-//     throw new Error("Failed to create appointment.");
-//   }
-// };
+    const appointmentCount = await prisma.appointment.count({
+      where: {
+        doctorId,
+        date: {
+          gte: new Date(dateObj.setHours(0, 0, 0, 0)),
+          lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+
+    if (appointmentCount >= maxPatients) {
+      return res.status(400).json({
+        error: "Maximum patients reached for this day",
+      });
+    }
+
+    // Calculate appointment time
+    const lastAppointment = await prisma.appointment.findFirst({
+      where: {
+        doctorId,
+        date: {
+          gte: new Date(dateObj.setHours(0, 0, 0, 0)),
+          lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+        },
+      },
+      select: { time: true },
+      orderBy: { time: "desc" },
+    });
+
+    const workingHours = doctorDetails.workingHours[0];
+    const [startHours, startMinutes] = workingHours.startTime
+      .split(":")
+      .map(Number);
+
+    let appointmentTime;
+    if (!lastAppointment) {
+      // First appointment of the day
+      appointmentTime = new Date(dateObj);
+      appointmentTime.setHours(startHours, startMinutes, 0, 0);
+    } else {
+      // Schedule after last appointment with 30-minute interval
+      appointmentTime = new Date(lastAppointment.time);
+      appointmentTime.setMinutes(appointmentTime.getMinutes() + 30);
+    }
+
+    // Validate appointment time is within working hours
+    const [endHours, endMinutes] = workingHours.endTime
+      ? workingHours.endTime.split(":").map(Number)
+      : [23, 59];
+
+    const endTime = new Date(dateObj);
+    endTime.setHours(endHours, endMinutes, 0, 0);
+
+    if (appointmentTime > endTime) {
+      return res.status(400).json({
+        error: "Appointment time exceeds doctor's working hours",
+      });
+    }
+
+    // Create new appointment
+    const newAppointment = await prisma.appointment.create({
+      data: {
+        doctorId,
+        patientId,
+        date: dateObj,
+        time: appointmentTime,
+        
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      appointment: newAppointment,
+      estimatedTime: appointmentTime,
+    });
+  } catch (error) {
+    console.error("Appointment booking error:", error);
+    return res.status(500).json({
+      error: "Failed to book appointment",
+      message: error.message,
+    });
+  }
+};

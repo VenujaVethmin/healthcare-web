@@ -62,8 +62,7 @@ model Appointment {
   room             String?
   date             DateTime?
   time             DateTime?  // Appointment start time
-  expectedEndTime  DateTime?  // Default: `time` + consultation duration
-  actualEndTime    DateTime?  // When the doctor actually finished
+
   status           AppointmentStatus @default(Scheduled)
   contact          String?
   paid             Boolean? @default(false)

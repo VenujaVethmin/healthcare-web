@@ -1,29 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, User, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
-
-// Helper function to calculate approximate time
-const calculateApproximateTime = (
-  appointmentNumber,
-  startTime = "09:00",
-  duration = 15
-) => {
-  const [hours, minutes] = startTime.split(":").map(Number);
-  const baseDate = new Date();
-  baseDate.setHours(hours, minutes, 0, 0);
-
-  const minutesToAdd = (appointmentNumber - 1) * duration;
-  baseDate.setMinutes(baseDate.getMinutes() + minutesToAdd);
-
-  return baseDate.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
+import axios from "axios";
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -36,52 +17,27 @@ const formatDate = (date) => {
   }).format(date);
 };
 
-// Helper function to get appointments for date
-const getAppointmentsForDate = (date, appointments) => {
-  if (!date) return 0;
-  const dateString = date.toISOString().split("T")[0];
-  return appointments[dateString] || 0;
-};
-
-// Helper function to get start time for a specific day
-const getStartTime = (date) => {
-  if (!date) return "09:00";
-  const dayName = date
-    .toLocaleDateString("en-US", { weekday: "long" })
-    .toLowerCase();
-  return dummyDoctorSettings.workingHours[dayName]?.start || "09:00";
-};
-
-// Updated dummy data structure
-const dummyDoctorSettings = {
-  id: 1,
-  name: "Dr. Sarah Johnson",
-  specialty: "Cardiologist",
-  location: "Colombo Central Hospital",
-  image: "https://i.pravatar.cc/150?img=1",
-  workingHours: {
-    monday: { start: "09:00", end: "17:00", isWorking: true },
-    tuesday: { start: "09:00", end: "17:00", isWorking: true },
-    wednesday: { start: "09:00", end: "17:00", isWorking: true },
-    thursday: { start: "09:00", end: "17:00", isWorking: true },
-    friday: { start: "09:00", end: "17:00", isWorking: true },
-    saturday: { start: "09:00", end: "13:00", isWorking: true },
-    sunday: { start: "09:00", end: "17:00", isWorking: false },
-  },
-  consultationFee: 2500,
-  maxPatientsPerDay: 20,
-  consultationDuration: 15, // in minutes
-  appointments: {
-    "2024-03-13": 12,
-    "2024-03-14": 8,
-  },
+// Helper function to format time from HH:mm to 12-hour format
+const formatTime = (time) => {
+  if (!time) return "";
+  const [hours, minutes] = time.split(":").map(Number);
+  return new Date(0, 0, 0, hours, minutes).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 };
 
 export default function BookAppointment() {
   const params = useParams();
   const [selectedDate, setSelectedDate] = useState(null);
-  const [currentAppointments, setCurrentAppointments] = useState(0);
+  
+  const [doctorData, setDoctorData] = useState(null);
+  const [estimatedTime, setEstimatedTime] = useState(null);
+  console.log("es time "+estimatedTime);
   const [bookingStep, setBookingStep] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Generate next 7 available days
   const availableDates = Array.from({ length: 7 }, (_, i) => {
@@ -91,53 +47,120 @@ export default function BookAppointment() {
     return date;
   });
 
+  // Fetch initial doctor data
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/doctors/${params.id}/`);
+        console.log(res.data)
+        setDoctorData(res.data.doctor);
+      } catch (err) {
+        setError(err.response?.data?.error || "Error fetching doctor details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoctor();
+  }, [params.id]);
+
   const handleBack = () => {
     if (bookingStep > 1) {
       setBookingStep(bookingStep - 1);
       if (bookingStep === 2) {
         setSelectedDate(null);
-        setCurrentAppointments(0);
+        setEstimatedTime(null);
       }
     }
   };
 
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    const appointments = getAppointmentsForDate(
-      date,
-      dummyDoctorSettings.appointments
-    );
-    setCurrentAppointments(appointments);
-    setBookingStep(2);
+  // Update the handleDateSelect function
+  const handleDateSelect = async (date) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/doctors/${params.id}`,
+        {
+          date: date.toISOString(),
+        }
+      );
+
+      console.log("g" + JSON.stringify(res, null, 2));
+
+
+
+
+      setSelectedDate(date);
+      setDoctorData(res.data.doctor);
+      setEstimatedTime(res.data.estimatedTime);
+      setBookingStep(2);
+    } catch (err) {
+      setError(err.response?.data?.error || "Error checking date availability");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBookAppointment = () => {
+  // Update the handleBookAppointment function
+  const handleBookAppointment = async () => {
     if (!selectedDate) {
-      alert("Please select a date");
+      setError("Please select a date");
       return;
     }
 
-    if (currentAppointments >= dummyDoctorSettings.maxPatientsPerDay) {
-      alert("No more appointments available for this day");
-      return;
+    try {
+      setLoading(true);
+      const appointmentDate = new Date(selectedDate);
+     console.log(appointmentDate.toISOString())
+     
+
+      // console.log("hi")
+      // console.log(appointmentDate.toISOString());
+
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/bookAppoitnment`, {
+        doctorId: params.id,
+        date: appointmentDate,
+      });
+
+      alert("Appointment booked successfully!");
+      setSelectedDate(null);
+      setEstimatedTime(null);
+      setBookingStep(1);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || "Error booking appointment");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    console.log("Booking confirmed:", {
-      doctor: dummyDoctorSettings.name,
-      date: formatDate(selectedDate),
-      appointmentNumber: currentAppointments + 1,
-      approximateTime: calculateApproximateTime(
-        currentAppointments + 1,
-        getStartTime(selectedDate),
-        dummyDoctorSettings.consultationDuration
-      ),
-      fee: dummyDoctorSettings.consultationFee,
-    });
+  if (loading && !doctorData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#3a99b7]"></div>
+      </div>
+    );
+  }
 
-    alert("Appointment booked successfully!");
-    setSelectedDate(null);
-    setCurrentAppointments(0);
-    setBookingStep(1);
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!doctorData) return null;
+
+  const isDateAvailable = (date) => {
+    const dayName = date
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toUpperCase();
+    return doctorData.workingHours.some(
+      (hours) => hours.day === dayName && hours.isWorking
+    );
   };
 
   return (
@@ -147,24 +170,24 @@ export default function BookAppointment() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4">
             <img
-              src={dummyDoctorSettings.image}
-              alt={dummyDoctorSettings.name}
+              src={doctorData.doctor.image}
+              alt={doctorData.doctor.name}
               className="w-16 h-16 rounded-full object-cover"
             />
             <div>
               <h1 className="text-2xl font-semibold text-[#232323]">
-                Book Appointment with {dummyDoctorSettings.name}
+                Book Appointment with {doctorData.doctor.name}
               </h1>
-              <p className="text-[#82889c]">{dummyDoctorSettings.specialty}</p>
+              <p className="text-[#82889c]">
+                {doctorData.specialty || "Doctor"}
+              </p>
             </div>
           </div>
           <div className="bg-[#3a99b7]/10 px-6 py-3 rounded-xl text-center">
             <p className="text-[#3a99b7] font-semibold text-2xl">
-              LKR {dummyDoctorSettings.consultationFee.toLocaleString()}
+              LKR {doctorData.consultationFee.toLocaleString()}
             </p>
-            <p className="text-sm text-[#82889c]">
-              {dummyDoctorSettings.consultationDuration} mins consultation
-            </p>
+            <p className="text-sm text-[#82889c]">Consultation Fee</p>
           </div>
         </div>
       </div>
@@ -187,17 +210,14 @@ export default function BookAppointment() {
                 {formatDate(selectedDate)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#3a99b7]" />
-              <span className="text-sm font-medium">
-                Around{" "}
-                {calculateApproximateTime(
-                  currentAppointments + 1,
-                  getStartTime(selectedDate),
-                  dummyDoctorSettings.consultationDuration
-                )}
-              </span>
-            </div>
+            {estimatedTime && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#3a99b7]" />
+                <span className="text-sm font-medium">
+                  Around {formatTime(estimatedTime)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -242,29 +262,17 @@ export default function BookAppointment() {
           <div className="grid grid-cols-7 gap-2">
             {availableDates.map((date) => {
               const isToday = new Date().toDateString() === date.toDateString();
-              const dayName = date
-                .toLocaleDateString("en-US", { weekday: "long" })
-                .toLowerCase();
-              const isAvailable =
-                dummyDoctorSettings.workingHours[dayName]?.isWorking;
-              const appointments = getAppointmentsForDate(
-                date,
-                dummyDoctorSettings.appointments
-              );
-              const isFull =
-                appointments >= dummyDoctorSettings.maxPatientsPerDay;
+              const isAvailable = isDateAvailable(date);
 
               return (
                 <button
                   key={date.toISOString()}
-                  onClick={() =>
-                    isAvailable && !isFull && handleDateSelect(date)
-                  }
-                  disabled={!isAvailable || isFull}
+                  onClick={() => isAvailable && handleDateSelect(date)}
+                  disabled={!isAvailable || loading}
                   className={`
                     p-4 rounded-lg text-center relative
                     ${
-                      isAvailable && !isFull
+                      isAvailable && !loading
                         ? "hover:bg-gray-50 cursor-pointer"
                         : "opacity-50 cursor-not-allowed bg-gray-50"
                     }
@@ -275,12 +283,7 @@ export default function BookAppointment() {
                     {date.toLocaleDateString("en-US", { weekday: "short" })}
                   </p>
                   <p className="text-lg font-medium">{date.getDate()}</p>
-                  {appointments > 0 && (
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-[#3a99b7]">
-                      {appointments}/{dummyDoctorSettings.maxPatientsPerDay}
-                    </span>
-                  )}
-                  {isToday && appointments === 0 && (
+                  {isToday && (
                     <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-[#3a99b7]">
                       Today
                     </span>
@@ -308,38 +311,29 @@ export default function BookAppointment() {
               <p className="font-medium text-lg">{formatDate(selectedDate)}</p>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-[#3a99b7]" />
-                <p className="text-gray-600">Estimated Time:</p>
+            {estimatedTime && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-[#3a99b7]" />
+                  <p className="text-gray-600">Estimated Time:</p>
+                </div>
+                <p className="font-medium text-xl text-[#3a99b7]">
+                  Around {formatTime(estimatedTime)}
+                </p>
               </div>
-              <p className="font-medium text-xl text-[#3a99b7]">
-                Around{" "}
-                {calculateApproximateTime(
-                  currentAppointments + 1,
-                  getStartTime(selectedDate),
-                  dummyDoctorSettings.consultationDuration
-                )}
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Appointment #{currentAppointments + 1} of{" "}
-                {dummyDoctorSettings.maxPatientsPerDay}
-              </p>
-            </div>
+            )}
 
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-gray-600 mb-2">Consultation Details:</p>
               <p className="font-medium text-xl text-[#3a99b7]">
-                LKR {dummyDoctorSettings.consultationFee.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                {dummyDoctorSettings.consultationDuration} minutes duration
+                LKR {doctorData.consultationFee.toLocaleString()}
               </p>
             </div>
 
             <button
               onClick={() => setBookingStep(3)}
-              className="w-full p-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+              disabled={loading}
+              className="w-full p-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors disabled:opacity-50"
             >
               Continue to Confirm
             </button>
@@ -360,10 +354,10 @@ export default function BookAppointment() {
               <User className="w-5 h-5 text-[#82889c]" />
               <div>
                 <p className="font-medium text-[#232323]">
-                  {dummyDoctorSettings.name}
+                  {doctorData.doctor.name}
                 </p>
                 <p className="text-sm text-[#82889c]">
-                  {dummyDoctorSettings.specialty}
+                  {doctorData.specialty || "Doctor"}
                 </p>
               </div>
             </div>
@@ -374,20 +368,14 @@ export default function BookAppointment() {
                 <p className="font-medium text-[#232323]">
                   {formatDate(selectedDate)}
                 </p>
-                <p className="text-[#3a99b7] font-medium">
-                  Around{" "}
-                  {calculateApproximateTime(
-                    currentAppointments + 1,
-                    getStartTime(selectedDate),
-                    dummyDoctorSettings.consultationDuration
-                  )}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Appointment #{currentAppointments + 1} of{" "}
-                  {dummyDoctorSettings.maxPatientsPerDay}
-                </p>
+                {estimatedTime && (
+                  <p className="text-[#3a99b7] font-medium">
+                    Around {formatTime(estimatedTime)}
+                  </p>
+                )}
               </div>
             </div>
+            
 
             <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
               <Clock className="w-5 h-5 text-[#82889c]" />
@@ -396,24 +384,21 @@ export default function BookAppointment() {
                   Consultation Details
                 </p>
                 <p className="text-[#3a99b7] font-medium">
-                  LKR {dummyDoctorSettings.consultationFee.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {dummyDoctorSettings.consultationDuration} minutes
-                  consultation
+                  LKR {doctorData.consultationFee.toLocaleString()}
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleBookAppointment}
-              className="w-full p-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+              disabled={loading}
+              className="w-full p-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors disabled:opacity-50"
             >
-              Confirm Booking
+              {loading ? "Booking..." : "Confirm Booking"}
             </button>
           </div>
         </motion.div>
       )}
     </div>
-  );
+  );  
 }
