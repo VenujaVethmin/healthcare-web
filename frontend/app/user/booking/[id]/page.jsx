@@ -85,7 +85,7 @@ export default function BookAppointment() {
         }
       );
 
-      console.log("g" + JSON.stringify(res, null, 2));
+     
 
 
 

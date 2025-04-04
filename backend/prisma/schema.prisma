@@ -11,15 +11,17 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  name     String?
-  email    String  @unique
-  image    String?
-  role     Role    @default(PATIENT)
-  userProfile UserProfile?
-  doctorProfile DoctorProfile?
-  doctorAppointments  Appointment[] @relation("Doctor")
-  patientAppointments Appointment[] @relation("Patient")
+  id                   String                @id @default(cuid())
+  name                 String?
+  email                String                @unique
+  image                String?
+  role                 Role                  @default(PATIENT)
+  userProfile          UserProfile?
+  doctorProfile        DoctorProfile?
+  doctorAppointments   Appointment[]         @relation("Doctor")
+  patientAppointments  Appointment[]         @relation("Patient")
+  prescriptions        Prescription[]        @relation("Patient")
+  doctorPrescriptions  Prescription[]        @relation("Doctor")
   doctorBookingDetails DoctorBookingDetails?
 }
 
@@ -31,20 +33,19 @@ enum Role {
 }
 
 model UserProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  phone     String?
-  address   String?
-  dob       DateTime?
-  age       Int?
-  bio       String?
+  id      String    @id @default(cuid())
+  userId  String    @unique
+  user    User      @relation(fields: [userId], references: [id])
+  phone   String?
+  address String?
+  dob     DateTime?
+  bio     String?
 }
 
 model DoctorProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id])
   specialty    String?
   experience   String?
   education    String?
@@ -52,22 +53,38 @@ model DoctorProfile {
 }
 
 model Appointment {
-  id               String   @id @default(cuid())
-  doctorId         String
-  doctor           User     @relation("Doctor", fields: [doctorId], references: [id])
-  patientId        String
-  patient          User     @relation("Patient", fields: [patientId], references: [id])
-  specialty        String?
-  number           Int?
-  room             String?
-  date             DateTime?
-  time             DateTime?  // Appointment start time
+  id        String    @id @default(cuid())
+  doctorId  String
+  doctor    User      @relation("Doctor", fields: [doctorId], references: [id])
+  patientId String
+  patient   User      @relation("Patient", fields: [patientId], references: [id])
+  specialty String?
+  number    Int?
+  room      String?
+  date      DateTime?
+  time      DateTime? // Appointment start time
 
-  status           AppointmentStatus @default(Scheduled)
-  contact          String?
-  paid             Boolean? @default(false)
-  consultationFee  Float?
-  createdAt        DateTime @default(now())
+  status          AppointmentStatus @default(Scheduled)
+  contact         String?
+  paid            Boolean?          @default(false)
+  consultationFee Float?
+  createdAt       DateTime          @default(now())
+
+  // One-to-many relationship with Prescription
+  prescriptions Prescription?
+}
+
+model Prescription {
+  id               String      @id @default(cuid())
+  appointmentId    String      @unique
+  appointment      Appointment @relation(fields: [appointmentId], references: [id])
+  doctorId         String
+  doctor           User        @relation("Doctor", fields: [doctorId], references: [id])
+  patientId        String
+  patient          User        @relation("Patient", fields: [patientId], references: [id])
+  prescriptionDate DateTime    @default(now())
+  medicine         Json?
+  notes            String?
 }
 
 
@@ -77,30 +94,30 @@ enum AppointmentStatus {
 }
 
 model DoctorBookingDetails {
-  id                   String   @id @default(cuid())
-  doctorId             String   @unique
-  doctor               User     @relation(fields: [doctorId], references: [id])
-  specialty            String?
-  appointmentDuration  Int?
-  maxPatientsPerDay    Int?
-  consultationFee      Float?
-  isPublished          Boolean? @default(false)
-  createdAt            DateTime @default(now())
+  id                  String   @id @default(cuid())
+  doctorId            String   @unique
+  doctor              User     @relation(fields: [doctorId], references: [id])
+  specialty           String?
+  appointmentDuration Int?
+  maxPatientsPerDay   Int?
+  consultationFee     Float?
+  isPublished         Boolean? @default(false)
+  createdAt           DateTime @default(now())
 
   // One-to-many relationship with WorkingHour
-  workingHours         WorkingHour[] @relation("DoctorBookingHours")
+  workingHours WorkingHour[] @relation("DoctorBookingHours")
 }
 
 model WorkingHour {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   day       DayOfWeek
-  startTime String   @default("09:00")  // Stored as "HH:mm"
-  endTime   String   @default("17:00")  // Stored as "HH:mm"
-  isWorking Boolean  @default(true)
+  startTime String    @default("09:00") // Stored as "HH:mm"
+  endTime   String    @default("17:00") // Stored as "HH:mm"
+  isWorking Boolean   @default(true)
 
   // Foreign key reference to DoctorBookingDetails
   doctorBookingDetailsId String
-  doctorBookingDetails DoctorBookingDetails @relation("DoctorBookingHours", fields: [doctorBookingDetailsId], references: [id])
+  doctorBookingDetails   DoctorBookingDetails @relation("DoctorBookingHours", fields: [doctorBookingDetailsId], references: [id])
 }
 
 enum DayOfWeek {

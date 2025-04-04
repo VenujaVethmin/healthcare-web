@@ -101,3 +101,136 @@ export const updateAppointment = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const dashboard = async (req, res) => {
+  try {
+    // Count appointments for today
+    const todayCount = await prisma.appointment.count({
+      where: {
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
+          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+        },
+        status: "Scheduled",
+      },
+    });
+
+    // Count upcoming appointments (appointments after today)
+    const upcomingCount = await prisma.appointment.count({
+      where: {
+        date: {
+          gte: new Date(new Date().setHours(23, 59, 59, 999)), // Start of tomorrow (after today)
+
+        },
+      },
+    });
+
+    const completedCount = await prisma.appointment.count({
+      where: {
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
+          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+        },
+        status: "COMPLETED",
+      },
+      
+    });
+
+
+    const appoinments = await prisma.appointment.findMany({
+      where: {
+        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
+          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+        },
+        status: "Scheduled",
+      },
+
+      include: {
+        patient: {
+          select: {
+            name: true,
+            userProfile: true,
+          },
+        },
+      },
+    });
+
+    // Return the result as JSON
+    res.json({
+      todayCount,
+      upcomingCount: upcomingCount - todayCount,
+      appoinments,
+      completedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+export const calender = async (req, res) => {
+
+  try {
+    const today = await prisma.appointment.findMany({
+      where: {
+        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+
+        status: "Scheduled",
+      },
+      include: {
+        patient: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }); 
+
+
+
+    return res.status(200).json({
+      calender: today,
+      
+    });
+  } catch (error) {
+    
+    res.status(500).json({ error: error.message });
+    
+  }
+
+}
+
+export const createPrescription = async (req, res) => {
+  try {
+    const { appointmentId, patientId, medicine, notes } = req.body;
+
+    const newPrescription = await prisma.prescription.create({
+      data: {
+        appointmentId,
+        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        patientId,
+        medicine, // JSON array of medicines
+        notes,
+      },
+    });
+
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id: newPrescription.appointmentId },
+      data: { 
+        status : "COMPLETED"
+      }, // Update the appointment status to "Completed"
+    });
+
+
+    res.json({newPrescription , updatedAppointment});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

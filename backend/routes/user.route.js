@@ -1,13 +1,16 @@
 import { Router } from "express";
-import { bookAppointment, findDoctors, getProfile, getUserBooking,  } from "../controllers/user.controller.js";
+import { bookAppointment, calender, findDoctors, getProfile, getUserBooking,  } from "../controllers/user.controller.js";
 
 
 const userRoute = Router();
 
 userRoute.get("/profile", getProfile);
-userRoute.post("/doctors/:id",getUserBooking);
+userRoute.get("/calender", calender);
+
 
 userRoute.get("/findDoctors", findDoctors);
+userRoute.post("/doctors/:id",getUserBooking);
+
 userRoute.post("/bookAppoitnment", bookAppointment);
 ;
 // userRoute.post("/createAppointment", createNewAppointment);

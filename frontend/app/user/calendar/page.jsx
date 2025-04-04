@@ -1,68 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Clock,
-  MapPin,
-  User,
-  Phone,
-  ChevronDown,
-  Calendar,
-  Building,
-  Stethoscope,
-} from "lucide-react";
-import { format, addDays, parseISO } from "date-fns";
+import axiosInstance from "@/lib/axiosInstance";
+import { format, isAfter, isToday, isTomorrow, parseISO } from "date-fns";
+import { Building, Calendar, Clock, Stethoscope } from "lucide-react";
+import useSWR from "swr";
+
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
+
+const formatAppointmentTime = (timeString) => {
+  const time = new Date(timeString);
+  return format(time, "h:mm a");
+};
 
 export default function PatientAppointmentsPage() {
-  const [expandedAppointment, setExpandedAppointment] = useState(null);
+  const { data, error, isLoading } = useSWR("/user/calender", fetcher);
 
-  // Sample appointments data grouped by date
-  const appointmentsByDate = {
-    today: [
-      {
-        id: 1,
-        doctorName: "Dr. Sarah Connor",
-        specialty: "Cardiologist",
-        room: "003",
-        time: "10:30 AM",
-        reason: "Regular Checkup",
-        status: "upcoming",
-        contact: "+1 234-567-8900",
+  // Function to group appointments by date category
+  const groupAppointments = (appointments) => {
+    if (!appointments) return { today: [], tomorrow: [], upcoming: [] };
+
+    return appointments.reduce(
+      (acc, appointment) => {
+        const appointmentDate = new Date(appointment.date);
+        const appointmentData = {
+          id: appointment.id,
+          doctorName: appointment.doctor.name,
+          specialty: appointment.specialty || "General",
+          room: appointment.room || "TBD",
+          time: formatAppointmentTime(appointment.time),
+          date: appointment.date,
+          status: appointment.status.toLowerCase(),
+          contact: appointment.contact || "Not provided",
+        };
+
+        if (isToday(appointmentDate)) {
+          acc.today.push(appointmentData);
+        } else if (isTomorrow(appointmentDate)) {
+          acc.tomorrow.push(appointmentData);
+        } else if (isAfter(appointmentDate, new Date())) {
+          acc.upcoming.push(appointmentData);
+        }
+
+        return acc;
       },
-    ],
-    tomorrow: [
-      {
-        id: 2,
-        doctorName: "Dr. John Smith",
-        specialty: "Neurologist",
-        room: "001",
-        time: "2:15 PM",
-        reason: "Follow-up",
-        status: "scheduled",
-        contact: "+1 234-567-8901",
-      },
-    ],
-    upcoming: [
-      {
-        id: 3,
-        doctorName: "Dr. Emily Wilson",
-        specialty: "Dermatologist",
-        room: "002",
-        date: format(addDays(new Date(), 3), "yyyy-MM-dd"),
-        time: "3:30 PM",
-        reason: "Consultation",
-        status: "scheduled",
-        contact: "+1 234-567-8902",
-      },
-    ],
+      { today: [], tomorrow: [], upcoming: [] }
+    );
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "upcoming":
-        return "bg-blue-100 text-blue-700";
+    switch (status.toLowerCase()) {
       case "scheduled":
-        return "bg-purple-100 text-purple-700";
+        return "bg-blue-100 text-blue-700";
       case "completed":
         return "bg-green-100 text-green-700";
       case "cancelled":
@@ -98,15 +86,7 @@ export default function PatientAppointmentsPage() {
             </div>
             <div className="flex items-center gap-2 mt-1">
               <Building className="w-4 h-4 text-[#82889c]" />
-              <span className="text-sm text-[#232323]">
-                {appointment.room}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <MapPin className="w-4 h-4 text-[#82889c]" />
-              <span className="text-sm text-[#232323]">
-                {appointment.reason}
-              </span>
+              <span className="text-sm text-[#232323]">{appointment.room}</span>
             </div>
           </div>
         </div>
@@ -119,11 +99,28 @@ export default function PatientAppointmentsPage() {
             {appointment.status.charAt(0).toUpperCase() +
               appointment.status.slice(1)}
           </span>
-         
         </div>
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#3a99b7]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+        Error loading appointments
+      </div>
+    );
+  }
+
+  const appointmentsByDate = groupAppointments(data?.calender);
 
   return (
     <div className="space-y-6 p-4 sm:p-6">

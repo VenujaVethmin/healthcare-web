@@ -1,47 +1,20 @@
 "use client";
 
+import axiosInstance from "@/lib/axiosInstance";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
   Calendar,
   Users,
   CheckCircle,
-  FileText,
   User,
   Plus,
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-
-const todaysAppointments = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    time: "10:30 AM",
-    status: "upcoming",
-    age: "45",
-    gender: "Male",
-    number: 6,
-  },
-  {
-    id: 2,
-    patientName: "Sarah Smith",
-    time: "11:15 AM",
-    status: "completed",
-    age: "28",
-    gender: "Female",
-    number: 4,
-  },
-  {
-    id: 3,
-    patientName: "Mike Johnson",
-    time: "2:00 PM",
-    status: "upcoming",
-    age: "35",
-    gender: "Male",
-    number: 3,
-  },
-];
+import useSWR from "swr";
+import { useRouter } from "next/navigation";
+import { format, parseISO } from "date-fns";
 
 const dosageOptions = [
   "50mg",
@@ -63,13 +36,37 @@ const frequencyOptions = [
   "As needed",
 ];
 
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
+
+// Helper function to format time to Sri Lanka time
+const formatSriLankaTime = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      timeZone: "Asia/Colombo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "Invalid time";
+  }
+};
+
 export default function DoctorDashboard() {
+  const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [expandedAppointment, setExpandedAppointment] = useState(null);
   const [prescription, setPrescription] = useState({
     medicines: [{ name: "", dosage: "", frequency: "", duration: "" }],
     notes: "",
   });
+
+  const { data, error, isLoading, mutate } = useSWR(
+    "/doctor/dashboard",
+    fetcher
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -79,12 +76,28 @@ export default function DoctorDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const stats = {
-    upcoming: todaysAppointments.filter((apt) => apt.status === "upcoming")
-      .length,
-    completed: todaysAppointments.filter((apt) => apt.status === "completed")
-      .length,
-    total: todaysAppointments.length,
+  const handleViewProfile = async (patientId) => {
+    try {
+      router.push(`/doctor/patients/${patientId}`);
+    } catch (error) {
+      console.error("Error navigating to patient profile:", error);
+      alert("Failed to view patient profile");
+    }
+  };
+
+  const handleStartAppointment = async (appointmentId) => {
+    try {
+      if (expandedAppointment === appointmentId) {
+        setExpandedAppointment(null);
+        return;
+      }
+
+      setExpandedAppointment(appointmentId);
+      mutate();
+    } catch (error) {
+      console.error("Error starting appointment:", error);
+      alert("Failed to start appointment");
+    }
   };
 
   const handleAddMedicine = () => {
@@ -107,47 +120,90 @@ export default function DoctorDashboard() {
   };
 
   const handleRemoveMedicine = (index) => {
-    setPrescription((prev) => ({
-      ...prev,
-      medicines: prev.medicines.filter((_, i) => i !== index),
-    }));
+    if (prescription.medicines.length > 1) {
+      setPrescription((prev) => ({
+        ...prev,
+        medicines: prev.medicines.filter((_, i) => i !== index),
+      }));
+    }
   };
+const handleSubmitPrescription = async (appointment) => {
+  try {
+    // Validate prescription data
+    const isValid = prescription.medicines.every(
+      (medicine) =>
+        medicine.name &&
+        medicine.dosage &&
+        medicine.frequency &&
+        medicine.duration
+    );
 
-  const handleSubmitPrescription = (appointmentId) => {
-    // Add your prescription submission logic here
-    console.log("Prescription submitted:", { ...prescription, appointmentId });
+    if (!isValid) {
+      alert("Please fill in all medicine details");
+      return;
+    }
+
+    await axiosInstance.post(`/doctor/createPrescription`, {
+      appointmentId: appointment.id,
+      patientId: appointment.patientId, // Assuming appointment has patientId, adjust if needed
+      medicine: prescription.medicines,
+      notes: prescription.notes,
+    });
+
     setExpandedAppointment(null);
-    // Reset prescription form
     setPrescription({
       medicines: [{ name: "", dosage: "", frequency: "", duration: "" }],
       notes: "",
     });
-  };
+
+    // Refresh dashboard data
+    mutate();
+    alert("Prescription submitted successfully");
+  } catch (error) {
+    console.error("Error submitting prescription:", error);
+    alert("Failed to submit prescription");
+  }
+};
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#3a99b7]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+        Error loading dashboard data
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header with Current Time */}
+      {/* Header */}
       <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-[#232323]">
               Doctor Dashboard
             </h1>
-            <p className="text-[#82889c]">Welcome back, Dr. Connor</p>
+            <p className="text-[#82889c]">
+              Welcome back, Dr. {data?.doctor?.name}
+            </p>
           </div>
           <div className="flex items-center gap-2 bg-[#3a99b7]/10 px-4 py-2 rounded-lg">
             <Clock className="w-5 h-5 text-[#3a99b7]" />
             <span className="text-[#3a99b7] font-medium">
-              {currentTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatSriLankaTime(currentTime)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -158,7 +214,7 @@ export default function DoctorDashboard() {
             <div>
               <p className="text-[#82889c]">Today's Appointments</p>
               <h3 className="text-2xl font-semibold text-[#232323]">
-                {stats.total}
+                {data?.todayCount || 0}
               </h3>
             </div>
             <Calendar className="w-8 h-8 text-[#3a99b7]" />
@@ -175,7 +231,7 @@ export default function DoctorDashboard() {
             <div>
               <p className="text-[#82889c]">Upcoming</p>
               <h3 className="text-2xl font-semibold text-[#232323]">
-                {stats.upcoming}
+                {data?.upcomingCount || 0}
               </h3>
             </div>
             <Users className="w-8 h-8 text-[#3a99b7]" />
@@ -190,9 +246,9 @@ export default function DoctorDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[#82889c]">Completed</p>
+              <p className="text-[#82889c]">Completed Today</p>
               <h3 className="text-2xl font-semibold text-[#232323]">
-                {stats.completed}
+                {data?.completedCount || 0}
               </h3>
             </div>
             <CheckCircle className="w-8 h-8 text-[#3a99b7]" />
@@ -200,25 +256,28 @@ export default function DoctorDashboard() {
         </motion.div>
       </div>
 
-      {/* Today's Appointments */}
+      {/* Appointments List */}
       <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-[#232323]">
               Today's Appointments
             </h2>
-            <p className="text-[#82889c] text-sm">Manage your appointments</p>
+            <p className="text-[#82889c] text-sm">
+              {format(new Date(), "EEEE, MMMM d, yyyy")}
+            </p>
           </div>
         </div>
 
         <div className="space-y-4">
-          {todaysAppointments.sort().map((appointment) => (
+          {data?.appoinments?.map((appointment) => (
             <motion.div
               key={appointment.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-lg border border-[#e2e2e2] hover:border-[#3a99b7] transition-colors overflow-hidden"
             >
+              {/* Appointment Card Content */}
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
@@ -227,10 +286,11 @@ export default function DoctorDashboard() {
                     </div>
                     <div>
                       <h3 className="font-medium text-[#232323]">
-                        {appointment.patientName}
+                        {appointment.patient.name}
                       </h3>
                       <p className="text-sm text-[#82889c] mt-1">
-                        {appointment.age} years • {appointment.gender}
+                        {appointment.patient.age} years •{" "}
+                        {appointment.patient.gender}
                       </p>
                       <p className="text-sm text-[#82889c] mt-1">
                         Number: {appointment.number}
@@ -238,40 +298,37 @@ export default function DoctorDashboard() {
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="w-4 h-4 text-[#82889c]" />
                         <span className="text-sm text-[#82889c]">
-                          {appointment.time}
+                          {formatSriLankaTime(appointment.time)}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {appointment.status === "upcoming" && (
-                    <div className={"space-x-2"}>
+                  {(
+                    <div className="space-x-2">
                       <button
-                      className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
-                     
+                        onClick={() =>
+                          handleViewProfile(appointment.patient.id)
+                        }
+                        className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
                       >
-                      View Profile
-                     </button>
+                        View Profile
+                      </button>
 
-                     <button
-                      className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
-                      onClick={() =>
-                        setExpandedAppointment(
-                          expandedAppointment === appointment.id
-                            ? null
-                            : appointment.id
-                        )
-                      }
-                    >
-                      {expandedAppointment === appointment.id
-                        ? "Close"
-                        : "Start"}
-                    </button>
+                      <button
+                        onClick={() => handleStartAppointment(appointment.id)}
+                        className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+                      >
+                        {expandedAppointment === appointment.id
+                          ? "Close"
+                          : "Start"}
+                      </button>
                     </div>
                   )}
                 </div>
               </div>
 
+              {/* Prescription Form */}
               <AnimatePresence>
                 {expandedAppointment === appointment.id && (
                   <motion.div
@@ -387,7 +444,7 @@ export default function DoctorDashboard() {
 
                         <button
                           onClick={() =>
-                            handleSubmitPrescription(appointment.id)
+                            handleSubmitPrescription(appointment)
                           }
                           className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
                         >
@@ -400,6 +457,12 @@ export default function DoctorDashboard() {
               </AnimatePresence>
             </motion.div>
           ))}
+
+          {!data?.appointments?.length && (
+            <p className="text-center text-[#82889c] py-4">
+              No appointments scheduled for today
+            </p>
+          )}
         </div>
       </div>
     </div>

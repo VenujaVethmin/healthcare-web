@@ -325,3 +325,43 @@ export const bookAppointment = async (req, res) => {
     });
   }
 };
+
+//////////////////////////////
+// calender
+
+export const calender = async (req, res) => {
+
+  try {
+    const today = await prisma.appointment.findMany({
+      where: {
+        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+         
+        },
+
+        status: "Scheduled",
+      },
+      include: {
+        doctor: {
+          select:{
+            name: true,
+          }
+        },
+        
+      },
+    }); 
+
+
+
+    return res.status(200).json({
+      calender: today,
+      
+    });
+  } catch (error) {
+    
+    res.status(500).json({ error: error.message });
+    
+  }
+
+}
