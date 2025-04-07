@@ -3,88 +3,37 @@
 import { motion } from "framer-motion";
 import { FileText, Calendar, User, ArrowLeft, Clock } from "lucide-react";
 import Link from "next/link";
+import axiosInstance from "@/lib/axiosInstance";
+import useSWR from "swr";
 
-const prescriptions = [
-  {
-    id: 1,
-    prescribedBy: "Dr. Sarah Connor",
-    date: "March 1, 2024",
-    medicines: [
-      {
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "3 times daily",
-        duration: "7 days",
-      },
-      {
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "Every 6 hours",
-        duration: "5 days",
-      },
-      {
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "3 times daily",
-        duration: "7 days",
-      },
-      {
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "Every 6 hours",
-        duration: "5 days",
-      },
-      {
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "3 times daily",
-        duration: "7 days",
-      },
-      {
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "Every 6 hours",
-        duration: "5 days",
-      },
-      {
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "3 times daily",
-        duration: "7 days",
-      },
-      {
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "Every 6 hours",
-        duration: "5 days",
-      },
-    ],
-    notes:
-      "Take medicines after food. Complete the full course of antibiotics.",
-  },
-  {
-    id: 2,
-    prescribedBy: "Dr. John Smith",
-    date: "February 28, 2024",
-    medicines: [
-      {
-        name: "Omeprazole",
-        dosage: "20mg",
-        frequency: "Once daily",
-        duration: "14 days",
-      },
-      {
-        name: "B-Complex",
-        dosage: "1 tablet",
-        frequency: "Once daily",
-        duration: "30 days",
-      },
-    ],
-    notes: "Take Omeprazole on empty stomach in the morning.",
-  },
-];
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 export default function PrescriptionsPage() {
+  const {
+    data: prescriptions,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR("/user/getPrescription", fetcher);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#3a99b7]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Error loading prescriptions
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6">
       <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
@@ -105,7 +54,7 @@ export default function PrescriptionsPage() {
       </div>
 
       <div className="space-y-4">
-        {prescriptions.map((prescription) => (
+        {prescriptions?.prescriptions?.map((prescription) => (
           <motion.div
             key={prescription.id}
             initial={{ opacity: 0, y: 20 }}
@@ -120,13 +69,15 @@ export default function PrescriptionsPage() {
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-[#82889c]" />
                   <span className="text-[#232323] font-medium">
-                    {prescription.prescribedBy}
+                   Dr. {prescription.doctor.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Calendar className="w-4 h-4 text-[#82889c]" />
                   <span className="text-sm text-[#82889c]">
-                    {prescription.date}
+                    {new Date(
+                      prescription.prescriptionDate
+                    ).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -134,7 +85,7 @@ export default function PrescriptionsPage() {
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {prescription.medicines.map((medicine, index) => (
+                {prescription.medicine.map((medicine, index) => (
                   <div
                     key={index}
                     className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors space-y-2"

@@ -14,6 +14,7 @@ model User {
   id                   String                @id @default(cuid())
   name                 String?
   email                String                @unique
+  password             String?
   image                String?
   role                 Role                  @default(PATIENT)
   userProfile          UserProfile?
@@ -39,15 +40,20 @@ model UserProfile {
   phone   String?
   address String?
   dob     DateTime?
-  bio     String?
+  bio     String? @default("hi hello")
+  bloodType String?
+  allergies String?
+  emergencyContact Json?
 }
 
 model DoctorProfile {
   id           String  @id @default(cuid())
   userId       String  @unique
   user         User    @relation(fields: [userId], references: [id])
+  bio         String? @default("hi hello")
   specialty    String?
   experience   String?
+  qualifications String?
   education    String?
   availability String?
 }
@@ -85,6 +91,7 @@ model Prescription {
   prescriptionDate DateTime    @default(now())
   medicine         Json?
   notes            String?
+  createdAt       DateTime    @default(now())
 }
 
 
@@ -97,7 +104,8 @@ model DoctorBookingDetails {
   id                  String   @id @default(cuid())
   doctorId            String   @unique
   doctor              User     @relation(fields: [doctorId], references: [id])
-  specialty           String?
+  specialty           String? @default("General Practitioner")
+  room               String? @default("Room 1")
   appointmentDuration Int?
   maxPatientsPerDay   Int?
   consultationFee     Float?

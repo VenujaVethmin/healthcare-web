@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { calender, createPrescription, dashboard, getProfile, updateAppointment } from "../controllers/doctor.controller.js";
+import { calender, createPrescription, dashboard, getProfile, updateAppointment, updateProfile } from "../controllers/doctor.controller.js";
 
 
 const doctorRoute = Router();
 
 doctorRoute.get("/profile", getProfile);
-// doctorRoute.put("/profile", updateProfile);
+doctorRoute.put("/profile", updateProfile);
 doctorRoute.get("/calender", calender);
 
 doctorRoute.get("/dashboard", dashboard);

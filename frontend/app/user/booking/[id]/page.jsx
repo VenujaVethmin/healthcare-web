@@ -5,6 +5,7 @@ import { Calendar, Clock, MapPin, User, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import Image from "next/image";
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -169,14 +170,16 @@ export default function BookAppointment() {
       <div className="bg-white rounded-xl border border-black/10 p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4">
-            <img
+            <Image
               src={doctorData.doctor.image}
               alt={doctorData.doctor.name}
+              width={64} // 16 * 4 for high resolution
+              height={64}
               className="w-16 h-16 rounded-full object-cover"
             />
             <div>
               <h1 className="text-2xl font-semibold text-[#232323]">
-                Book Appointment with {doctorData.doctor.name}
+                Book Appointment with Dr.{doctorData.doctor.name}
               </h1>
               <p className="text-[#82889c]">
                 {doctorData.specialty || "Doctor"}
@@ -375,7 +378,6 @@ export default function BookAppointment() {
                 )}
               </div>
             </div>
-            
 
             <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
               <Clock className="w-5 h-5 text-[#82889c]" />

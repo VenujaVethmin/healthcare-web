@@ -11,6 +11,7 @@ export default function DoctorSettings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hasChanges, setHasChanges] = useState({});
   const [doctorSettings, setDoctorSettings] = useState({});
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   const {
     data: doctors,
@@ -19,9 +20,6 @@ export default function DoctorSettings() {
     mutate,
   } = useSWR("/admin/getDoctorSchedule", fetcher);
 
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-
-  // Initialize doctor settings when data loads
   useEffect(() => {
     if (doctors) {
       const settings = {};
@@ -63,23 +61,18 @@ export default function DoctorSettings() {
     doctor?.doctor?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) {
+  if (isLoading)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg text-gray-600">Loading doctor schedules...</p>
+      <div className="text-lg text-gray-600 flex items-center justify-center min-h-screen">
+        Loading doctor schedules...
       </div>
     );
-  }
-
-  if (error) {
+  if (error)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg text-red-600">
-          Error loading doctors: {error.message}
-        </p>
+      <div className="text-lg text-red-600 flex items-center justify-center min-h-screen">
+        Error: {error.message}
       </div>
     );
-  }
 
   return (
     <div className="space-y-6 p-6">
@@ -87,7 +80,9 @@ export default function DoctorSettings() {
         <h1 className="text-2xl font-semibold text-[#232323]">
           Doctor Schedule Management
         </h1>
-        <p className="text-[#82889c]">Manage doctor working hours</p>
+        <p className="text-[#82889c]">
+          Manage doctor working hours and details
+        </p>
       </div>
 
       <div className="relative">
@@ -106,11 +101,14 @@ export default function DoctorSettings() {
           {filteredDoctors?.map((doctor) => {
             const settings = doctorSettings[doctor?.id];
             return (
-              <div key={doctor?.id} className="border-b border-gray-200 pb-6">
+              <div
+                key={doctor?.id}
+                className="border-b border-gray-200 pb-6 last:border-b-0"
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-medium text-[#232323]">
-                      {doctor?.doctor?.name}
+                     Dr. {doctor?.doctor?.name}
                     </h3>
                     <p className="text-sm text-[#82889c]">
                       {doctor?.doctor?.email}
@@ -129,7 +127,46 @@ export default function DoctorSettings() {
                 </div>
 
                 {selectedDoctor === doctor?.id && settings && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    {/* Doctor Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-[#232323] mb-2">
+                          Specialty
+                        </label>
+                        <input
+                          type="text"
+                          value={settings?.specialty || ""}
+                          onChange={(e) =>
+                            handleChange(doctor.id, {
+                              ...settings,
+                              specialty: e.target.value,
+                            })
+                          }
+                          className="px-3 py-2 rounded-lg border border-gray-200 w-full"
+                          placeholder="Enter specialty"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#232323] mb-2">
+                          Room Number
+                        </label>
+                        <input
+                          type="text"
+                          value={settings?.room || ""}
+                          onChange={(e) =>
+                            handleChange(doctor.id, {
+                              ...settings,
+                              room: e.target.value,
+                            })
+                          }
+                          className="px-3 py-2 rounded-lg border border-gray-200 w-full"
+                          placeholder="Enter room number"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Working Hours */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {settings?.workingHours?.map((hour) => (
                         <div key={hour?.id} className="flex items-center gap-4">
@@ -157,7 +194,7 @@ export default function DoctorSettings() {
                           />
                           <input
                             type="time"
-                            value={hour?.startTime || "09:00"} // Ensure default value
+                            value={hour?.startTime || "09:00"}
                             disabled={!hour?.isWorking}
                             onChange={(e) => {
                               const updatedHours = settings.workingHours.map(
@@ -176,7 +213,7 @@ export default function DoctorSettings() {
                           <span className="text-[#82889c]">to</span>
                           <input
                             type="time"
-                            value={hour?.endTime || "17:00"} // Ensure default value
+                            value={hour?.endTime || "17:00"}
                             disabled={!hour?.isWorking}
                             onChange={(e) => {
                               const updatedHours = settings.workingHours.map(
@@ -196,6 +233,7 @@ export default function DoctorSettings() {
                       ))}
                     </div>
 
+                    {/* Additional Settings */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-[#232323] mb-2">
@@ -203,12 +241,12 @@ export default function DoctorSettings() {
                         </label>
                         <input
                           type="number"
-                          value={settings?.appointmentDuration ?? ""} // Default to empty string
+                          value={settings?.appointmentDuration ?? ""}
                           onChange={(e) =>
                             handleChange(doctor.id, {
                               ...settings,
                               appointmentDuration:
-                                parseInt(e.target.value) || 0, // Ensure valid number
+                                parseInt(e.target.value) || 0,
                             })
                           }
                           className="px-3 py-2 rounded-lg border border-gray-200 w-full"
@@ -221,12 +259,11 @@ export default function DoctorSettings() {
                         </label>
                         <input
                           type="number"
-                          value={settings?.maxPatientsPerDay ?? ""} // Default to empty string
+                          value={settings?.maxPatientsPerDay ?? ""}
                           onChange={(e) =>
                             handleChange(doctor.id, {
                               ...settings,
-                              maxPatientsPerDay:
-                                parseInt(e.target.value) || 0, // Ensure valid number
+                              maxPatientsPerDay: parseInt(e.target.value) || 0,
                             })
                           }
                           className="px-3 py-2 rounded-lg border border-gray-200 w-full"
@@ -239,12 +276,11 @@ export default function DoctorSettings() {
                         </label>
                         <input
                           type="number"
-                          value={settings?.consultationFee ?? ""} // Default to empty string
+                          value={settings?.consultationFee ?? ""}
                           onChange={(e) =>
                             handleChange(doctor.id, {
                               ...settings,
-                              consultationFee:
-                                parseInt(e.target.value) || 0, // Ensure valid number
+                              consultationFee: parseInt(e.target.value) || 0,
                             })
                           }
                           className="px-3 py-2 rounded-lg border border-gray-200 w-full"
@@ -252,6 +288,7 @@ export default function DoctorSettings() {
                       </div>
                     </div>
 
+                    {/* Save Button */}
                     <div className="flex justify-end gap-4 mt-6">
                       <button
                         onClick={() => handleSaveSettings(doctor.id)}

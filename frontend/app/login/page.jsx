@@ -3,32 +3,93 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Activity } from "lucide-react";
+import { Activity, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Form validation
+    if (!formData.email.trim()) {
+      window.alert("Email is required");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      window.alert("Invalid email format");
+      return;
+    }
+
+    if (!formData.password) {
+      window.alert("Password is required");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
+        {
+          email: formData.email,
+          password: formData.password,
+        
+        }
+      );
+
+      if (response.status === 200) {
+        window.alert("Login successful!");
+        router.push("/redirect");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      window.alert(error.response?.data?.message || "Failed to login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleLogin = () => {
-    console.log("Google Sign-In Button Clicked"); // Debugging
-    window.location.href = "http://localhost:3001/auth/google";
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`;
   };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Section - Decorative */}
+      {/* Left Section with Medical Image */}
       <motion.div
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#3a99b7] to-[#2d7a93]"
+        className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#3a99b7] to-[#2d7a93] overflow-hidden"
       >
         <div className="absolute inset-0">
-          {/* Decorative circles */}
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <Image
+            src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?q=80&w=2791&auto=format&fit=crop"
+            alt="Modern Healthcare"
+            fill
+            className="object-cover mix-blend-overlay opacity-60"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#3a99b7]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2d7a93]/50 to-transparent" />
         </div>
 
         <div className="relative z-10 w-full flex flex-col items-center justify-center p-12 text-white">
@@ -36,28 +97,27 @@ export default function LoginPage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-8"
+            className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-8 shadow-xl"
           >
-            <Activity className="w-10 h-10" />
+            <Activity className="w-12 h-12" />
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-4xl font-bold mb-4"
+            className="text-5xl font-bold mb-6 text-center text-white drop-shadow-lg"
           >
-            Welcome to Healthi
+            Welcome Back
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg text-white/80 text-center max-w-md"
+            className="text-xl text-white text-center max-w-md leading-relaxed drop-shadow-md"
           >
-            Your trusted healthcare platform for managing appointments and
-            medical records
+            Sign in to continue managing your healthcare journey
           </motion.p>
         </div>
       </motion.div>
@@ -67,7 +127,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, x: 100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 flex items-center justify-center p-6 lg:p-12"
+        className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-white"
       >
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
@@ -85,16 +145,18 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Prevent form submission from refreshing the page */}
-          <form className="mt-8 space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
                 </label>
                 <Input
+                  name="email"
                   type="email"
-                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="john@example.com"
                   className="w-full h-11 px-4 rounded-lg border focus:border-[#3a99b7] focus:ring-[#3a99b7]/20"
                 />
               </div>
@@ -105,16 +167,23 @@ export default function LoginPage() {
                 </label>
                 <div className="relative">
                   <Input
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
                     placeholder="••••••••"
                     className="w-full h-11 px-4 rounded-lg border focus:border-[#3a99b7] focus:ring-[#3a99b7]/20"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -122,7 +191,11 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Checkbox id="remember-me" />
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked)}
+                />
                 <label
                   htmlFor="remember-me"
                   className="ml-2 text-sm text-gray-600"
@@ -139,8 +212,17 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-4">
-              <Button className="w-full h-11 bg-gradient-to-r from-[#3a99b7] to-[#2d7a93] text-white hover:from-[#2d7a93] hover:to-[#3a99b7]">
-                Sign in
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full h-11 bg-gradient-to-r from-[#3a99b7] to-[#2d7a93] text-white 
+                  ${
+                    isLoading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:from-[#2d7a93] hover:to-[#3a99b7]"
+                  }`}
+              >
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
 
               <div className="relative">
@@ -154,34 +236,16 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                {/* Google Login Button */}
+              <div className="grid grid-cols-1">
                 <Button
                   onClick={handleGoogleLogin}
                   variant="outline"
                   className="w-full"
+                  disabled={isLoading}
                 >
                   <img
                     src="https://authjs.dev/img/providers/google.svg"
                     alt="Google"
-                    className="w-5 h-5"
-                  />
-                </Button>
-
-                {/* Apple Login Button */}
-                <Button variant="outline" className="w-full">
-                  <img
-                    src="https://authjs.dev/img/providers/apple.svg"
-                    alt="Apple"
-                    className="w-5 h-5"
-                  />
-                </Button>
-
-                {/* GitHub Login Button */}
-                <Button variant="outline" className="w-full">
-                  <img
-                    src="https://authjs.dev/img/providers/github.svg"
-                    alt="GitHub"
                     className="w-5 h-5"
                   />
                 </Button>

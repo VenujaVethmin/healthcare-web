@@ -3,23 +3,80 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getProfile = async (req, res) => {
-    try {
-        const user = await prisma.user.findUnique({
-          where: {
-            id: "cm8ak74pd0000ib68agzbmpx8",
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: "cm8oelbxu0000ibrk1rfgovpu",
+      },
+      include: {
+        doctorProfile: true,
+        doctorBookingDetails: {
+          select: {
+            workingHours: true,
           },
-          include: {
-           doctorProfile : true,
-          },
-        });
-    
-        res.json({ user });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+        },
+      },
+    });
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
+export const updateProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      image,
+      bio,
+      specialty,
+      experience,
+      qualifications,
+      education,
+    } = req.body;
 
+    const userId = "cm8oelbxu0000ibrk1rfgovpu"; // Should come from req.user.id
 
+    const user = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        name,
+        image,
+        doctorProfile: {
+          upsert: {
+            update: {
+              bio,
+              specialty,
+              experience,
+              qualifications,
+              education,
+            },
+            create: {
+              bio,
+              specialty,
+              experience,
+              qualifications,
+              education,
+            },
+          },
+        },
+      },
+      include: {
+        doctorProfile: true,
+      },
+    });
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      error: "Failed to update profile",
+      message: error.message,
+    });
+  }
+};
 
 
 // Helper function to convert time to Sri Lanka time (UTC+5:30)
@@ -95,7 +152,10 @@ export const updateAppointment = async (req, res) => {
       actualEnd
     );
 
-    res.json({ message: "Appointment updated & future appointments rescheduled", appointment: updatedAppointment });
+    res.json({
+      message: "Appointment updated & future appointments rescheduled",
+      appointment: updatedAppointment,
+    });
   } catch (error) {
     console.error("Error updating appointment:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -120,7 +180,6 @@ export const dashboard = async (req, res) => {
       where: {
         date: {
           gte: new Date(new Date().setHours(23, 59, 59, 999)), // Start of tomorrow (after today)
-
         },
       },
     });
@@ -133,9 +192,7 @@ export const dashboard = async (req, res) => {
         },
         status: "COMPLETED",
       },
-      
     });
-
 
     const appoinments = await prisma.appointment.findMany({
       where: {
@@ -169,11 +226,7 @@ export const dashboard = async (req, res) => {
   }
 };
 
-
-
-
 export const calender = async (req, res) => {
-
   try {
     const today = await prisma.appointment.findMany({
       where: {
@@ -191,21 +244,15 @@ export const calender = async (req, res) => {
           },
         },
       },
-    }); 
-
-
+    });
 
     return res.status(200).json({
       calender: today,
-      
     });
   } catch (error) {
-    
     res.status(500).json({ error: error.message });
-    
   }
-
-}
+};
 
 export const createPrescription = async (req, res) => {
   try {
@@ -223,13 +270,12 @@ export const createPrescription = async (req, res) => {
 
     const updatedAppointment = await prisma.appointment.update({
       where: { id: newPrescription.appointmentId },
-      data: { 
-        status : "COMPLETED"
+      data: {
+        status: "COMPLETED",
       }, // Update the appointment status to "Completed"
     });
 
-
-    res.json({newPrescription , updatedAppointment});
+    res.json({ newPrescription, updatedAppointment });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

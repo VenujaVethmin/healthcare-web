@@ -5,6 +5,7 @@ import { Search, Users, MapPin, Star, Filter } from "lucide-react";
 import Link from "next/link";
 import axiosInstance from "@/lib/axiosInstance";
 import useSWR from "swr";
+import Image from "next/image";
 
 
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
@@ -128,18 +129,23 @@ console.log("d "+doctors);
             <div className="p-5 space-y-4">
               {/* Doctor Info */}
               <div className="flex gap-4">
-                <img
+                <Image
                   className="w-[65px] h-[65px] rounded-full object-cover"
                   src={doctor.image}
                   alt={doctor.name}
+                  width={65}
+                  height={65}
+                  priority={false}
                 />
+
                 <div className="space-y-2">
                   <div>
                     <h3 className="text-lg font-medium text-[#232323]">
                       {doctor.name}
                     </h3>
                     <p className="text-sm text-[#7a7d84]">
-                      {doctor.doctorBookingDetails.specialty} | {doctor.experience}
+                      {doctor.doctorBookingDetails.specialty} |{" "}
+                      {doctor.experience}
                     </p>
                   </div>
                   {/* <div className="flex items-center gap-2">
@@ -173,7 +179,7 @@ console.log("d "+doctors);
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#232323]">
-                  Rs  {doctor.doctorBookingDetails.consultationFee}
+                    Rs {doctor.doctorBookingDetails.consultationFee}
                   </p>
                   <p className="text-xs text-[#7a7d84]">Consultation Fee</p>
                 </div>

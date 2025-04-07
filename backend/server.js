@@ -10,6 +10,11 @@ import userRoute from "./routes/user.route.js";
 import doctorRoute from "./routes/doctor.route.js";
 import adminRoute from "./routes/admin.route.js";
 import testRoute from "./routes/test.route.js";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import e from "cors";
+
+const prisma = new PrismaClient();
   dotenv.config();
 
   const app = express();
@@ -38,37 +43,41 @@ app.use(
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // app.post("/register", async (req, res) => {
-  //   const { name, email, password } = req.body;
+app.post("/auth/register", async (req, res) => {
+  const { name, email, password } = req.body;
 
-  //   try {
-  //     if (!name || !email || !password) {
-  //       return res
-  //         .status(422)
-  //         .json({ error: "name, email and password are required" });
-  //     }
+  try {
+    if (!name || !email || !password) {
+      return res
+        .status(422)
+        .json({ error: "name, email and password are required" });
+    }
 
-  //     if (await users.findOne({ email })) {
-  //       return res.status(409).json({ error: "email already is use" });
-  //     }
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-  //     const hashedPassword = await bcrypt.hash(password, 10);
+    if (existingUser) {
+      return res.status(409).json({ error: "email already in use" });
+    }
 
-  //     const newUser = await users.insert({
-  //       name,
-  //       email,
-  //       password: hashedPassword,
-  //     });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  //     res
-  //       .status(201)
-  //       .json({ id: newUser._id, name: newUser.name, email: newUser.email });
-  //   } catch (error) {
-  //     res.status(500).json({ error: "Something went wrong" });
-  //   }
-  // });
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+    });
 
-  app.post("/login", async (req, res) => {
+    res.status(201).json({ newUser });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+  app.post("/auth/login", async (req, res) => {
     passport.authenticate("local", (error, user, info) => {
       if (error) {
         return res.status(500).json({ error: "Something went wrong" });

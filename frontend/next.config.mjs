@@ -7,6 +7,8 @@ const nextConfig = {
       "raw.githubusercontent.com",
       "i.pravatar.cc",
       "lh3.googleusercontent.com",
+      "replicate.delivery",
+      "example.com", // Added this line
     ],
   },
 };

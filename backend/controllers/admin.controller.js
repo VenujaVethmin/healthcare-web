@@ -1,36 +1,33 @@
 import { PrismaClient } from "@prisma/client";
 
-
 const prisma = new PrismaClient();
 
-export const adminDashboard = async(req,res) =>{
+export const adminDashboard = async (req, res) => {
   try {
     const data = await prisma.user.findMany({
-      where:{
-        role: "DOCTOR"
+      where: {
+        role: "DOCTOR",
       },
-      include : {
+      include: {
         doctorProfile: {
-          select : {
+          select: {
             education: true,
             specialty: true,
-            
-          }
-        }
-        ,
+          },
+        },
         doctorBookingDetails: {
-          select : {
+          select: {
             consultationFee: true,
             isPublished: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
-      res.json(data);
+    res.json(data);
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
-}
+};
 
 export const findUserByEmail = async (req, res) => {
   try {
@@ -40,28 +37,24 @@ export const findUserByEmail = async (req, res) => {
       where: { email: email.toLowerCase(), role: "PATIENT" },
     });
 
-   
-
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
 export const doctorList = async (req, res) => {
   try {
     const doctors = await prisma.user.findMany({
-      where:{
-        role: "DOCTOR"
-      }
+      where: {
+        role: "DOCTOR",
+      },
     });
     res.json(doctors);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 export const makeDoctor = async (req, res) => {
   try {
@@ -115,15 +108,13 @@ export const makeDoctor = async (req, res) => {
   }
 };
 
-
-
 export const deleteDoctor = async (req, res) => {
   try {
     const { userId } = req.body;
     const user = await prisma.user.delete({
       where: {
         id: userId,
-      }
+      },
     });
     res.json(user);
   } catch (error) {
@@ -131,10 +122,7 @@ export const deleteDoctor = async (req, res) => {
   }
 };
 
-
-
 //get doctors shedules details
-
 
 export const doctorSchedule = async (req, res) => {
   try {
@@ -142,7 +130,6 @@ export const doctorSchedule = async (req, res) => {
       include: {
         workingHours: true,
         doctor: true,
-        
       },
     });
     res.json(doctors);
@@ -154,7 +141,14 @@ export const doctorSchedule = async (req, res) => {
 export const updateDoctorSchedule = async (req, res) => {
   try {
     const { id } = req.params;
-    const { workingHours, appointmentDuration, maxPatientsPerDay, consultationFee } = req.body;
+    const {
+      workingHours,
+      appointmentDuration,
+      maxPatientsPerDay,
+      consultationFee,
+      specialty,
+      room
+    } = req.body;
 
     // Update doctor booking details
     const updatedDoctor = await prisma.$transaction(async (prisma) => {
@@ -165,6 +159,8 @@ export const updateDoctorSchedule = async (req, res) => {
           appointmentDuration,
           maxPatientsPerDay,
           consultationFee,
+          specialty,
+          room,
         },
       });
 
@@ -189,4 +185,80 @@ export const updateDoctorSchedule = async (req, res) => {
   }
 };
 
+export const dashboard = async (req, res) => {
+  try {
+    const doctorCount = await prisma.user.count({
+      where: {
+        role: "DOCTOR",
+      },
+    });
 
+    const patientCount = await prisma.user.count({
+      where: {
+        role: "PATIENT",
+      },
+    });
+
+    const todayAppointmentCount = await prisma.appointment.count({
+      where: {
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
+          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+        },
+      },
+    });
+
+    const card = await prisma.doctorBookingDetails.findMany({
+      include: {
+        doctor: {
+          select: {
+            name: true,
+            _count: {
+              select: {
+                doctorAppointments: {
+                  where: {
+                    date: {
+                      gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
+                      lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+                    },
+                    
+                  },
+
+                },
+              },
+            },
+
+            
+          },
+        },
+      },
+    });
+
+    res.json({
+      doctorCount,
+      patientCount,
+      todayAppointmentCount,
+      card,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+export const updatePublishStatus = async (req, res) => {
+
+  try {
+    const res = await prisma.doctorBookingDetails.update({
+      where: {
+        id: req.params.id,
+      },
+      data: {
+        isPublished: req.body.isPublished,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    
+  }
+}

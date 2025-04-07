@@ -1,322 +1,192 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
-import { Camera, ArrowRight, Clock } from "lucide-react";
+import {
+  AlertCircle,
+  Award,
+  Calendar,
+  Camera,
+  Clock,
+  Edit2,
+  GraduationCap,
+  Mail,
+  MapPin,
+  Phone,
+  Stethoscope,
+  User
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import useSWR from "swr";
 
-export default function DoctorOnboardingPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    specialty: "",
-    education: "",
-    experience: "",
-    phone: "",
-    location: "",
-    availability: "",
-    bio: "",
-    consultationFee: "",
-  });
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size should be less than 5MB");
-        return;
-      }
-      
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+export default function DoctorProfilePage() {
+  const { data, error, isLoading } = useSWR("/doctor/profile", fetcher);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3a99b7]"></div>
+      </div>
+    );
+  }
 
-  const validateForm = () => {
-    if (step === 1) {
-      return formData.name && formData.specialty && formData.education;
-    } else {
-      return formData.phone && formData.location && formData.availability;
-    }
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-500">
+        <AlertCircle className="w-5 h-5 mr-2" />
+        Error loading profile
+      </div>
+    );
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const formDataToSend = new FormData();
-      
-      Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
-      });
-      
-      if (image) {
-        formDataToSend.append("image", image);
-      }
-
-      const response = await axiosInstance.post("/doctor/complete-profile", formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.success) {
-        router.push("/doctor/dashboard");
-      }
-    } catch (error) {
-      console.error("Error completing profile:", error);
-      alert(error.response?.data?.message || "An error occurred while updating profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Get working days array
+  const workingDays = data?.user?.doctorBookingDetails?.workingHours
+    .filter(day => day.isWorking)
+    .map(day => day.day);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-black/10 p-4 sm:p-6"
-        >
-          <div className="text-center mb-6">
-            <h1 className="text-xl sm:text-2xl font-semibold text-[#232323]">
-              Complete Your Doctor Profile
-            </h1>
-            <p className="text-sm text-[#82889c] mt-2">
-              Set up your professional profile
+    <div className="space-y-6 p-4 sm:p-6">
+      {/* Header for mobile */}
+      <div className="sm:hidden">
+        <h1 className="text-xl font-semibold text-[#232323]">Doctor Profile</h1>
+      </div>
+
+      {/* Profile Section */}
+      <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
+        {/* Profile Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+            <div className="relative">
+              {data?.user.image ? (
+                <Image
+                  src={data.user.image}
+                  alt="profile"
+                  width={96}
+                  height={96}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 sm:w-[100px] sm:h-[100px] rounded-full bg-[#3a99b7] flex items-center justify-center">
+                  <span className="text-white text-xl sm:text-2xl font-medium">
+                    {data?.user.name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </span>
+                </div>
+              )}
+              <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md">
+                <Camera className="w-4 h-4 text-[#3a99b7]" />
+              </button>
+            </div>
+            <div className="space-y-1 sm:space-y-2">
+              <h2 className="text-[#434966] text-lg sm:text-xl font-semibold">
+                Dr. {data?.user.name}
+              </h2>
+              <p className="text-[#82889c] text-sm">{data?.user.doctorProfile?.specialty || "Specialty not set"}</p>
+              <p className="text-[#82889c] text-xs">
+                {data?.user.role}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/doctor/profile/edit"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 rounded-lg border border-[#434966] flex items-center justify-center sm:justify-start gap-2.5 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-[#434966] text-sm font-semibold">
+              Edit Profile
+            </span>
+            <Edit2 className="w-4 h-4 text-[#434966]" />
+          </Link>
+        </div>
+
+        {/* Professional Information */}
+        <div className="space-y-6">
+          <h3 className="text-[#434966] text-lg font-semibold flex items-center">
+            <Stethoscope className="w-5 h-5 mr-2 text-[#3a99b7]" />
+            Professional Information
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#82889c]" />
+                <p className="text-[#82889c] text-sm">Email Address</p>
+              </div>
+              <p className="text-[#434966] text-base font-medium">
+                {data?.user.email}
+              </p>
+            </div>
+
+            <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-[#82889c]" />
+                <p className="text-[#82889c] text-sm">Education</p>
+              </div>
+              <p className="text-[#434966] text-base font-medium">
+                {data?.user.doctorProfile?.education || "Not specified"}
+              </p>
+            </div>
+
+            <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#82889c]" />
+                <p className="text-[#82889c] text-sm">Experience</p>
+              </div>
+              <p className="text-[#434966] text-base font-medium">
+                {data?.user.doctorProfile?.experience || "Not specified"}
+              </p>
+            </div>
+
+            {/* Working Hours Section */}
+            <div className="col-span-full space-y-4">
+              <h4 className="text-[#434966] font-medium flex items-center">
+                <Clock className="w-4 h-4 mr-2 text-[#3a99b7]" />
+                Working Hours
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {data?.user?.doctorBookingDetails?.workingHours
+                  .filter(day => day.isWorking)
+                  .map((schedule) => (
+                    <div key={schedule.id} className="p-3 bg-gray-50 rounded-lg">
+                      <p className="text-[#434966] font-medium">{schedule.day}</p>
+                      <p className="text-sm text-[#82889c]">
+                        {schedule.startTime} - {schedule.endTime}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bio Section */}
+        <div className="mt-8">
+          <h3 className="text-[#434966] text-lg font-semibold mb-4 flex items-center">
+            <User className="w-5 h-5 mr-2 text-[#3a99b7]" />
+            Professional Summary
+          </h3>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-[#434966] text-base">
+              {data?.user.doctorProfile?.bio || "No professional summary available."}
             </p>
           </div>
+        </div>
 
-          <div className="space-y-6">
-            {step === 1 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Profile preview"
-                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[#3a99b7]/10 flex items-center justify-center">
-                        <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-[#3a99b7]" />
-                      </div>
-                    )}
-                    <label className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md cursor-pointer hover:bg-gray-50 transition-colors">
-                      <Camera className="w-4 h-4 text-[#3a99b7]" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="Dr. John Doe"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Specialty
-                    </label>
-                    <input
-                      type="text"
-                      name="specialty"
-                      value={formData.specialty}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="e.g., Cardiologist"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Education
-                    </label>
-                    <input
-                      type="text"
-                      name="education"
-                      value={formData.education}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="e.g., MD - Cardiology"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Years of Experience
-                    </label>
-                    <input
-                      type="text"
-                      name="experience"
-                      value={formData.experience}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="e.g., 10 years"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => validateForm() && setStep(2)}
-                    className="w-full sm:w-auto px-6 py-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!validateForm()}
-                  >
-                    Next
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="Enter your phone number"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Location/Clinic Address
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="Enter your clinic address"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Availability
-                    </label>
-                    <input
-                      type="text"
-                      name="availability"
-                      value={formData.availability}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="e.g., Mon-Fri, 9:00 AM - 5:00 PM"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Consultation Fee
-                    </label>
-                    <input
-                      type="number"
-                      name="consultationFee"
-                      value={formData.consultationFee}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7]"
-                      placeholder="Enter consultation fee"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#232323] mb-1">
-                      Professional Bio
-                    </label>
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleChange}
-                      className="w-full p-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7] min-h-[100px] resize-none"
-                      placeholder="Tell us about your professional experience"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="w-full sm:w-1/2 px-6 py-3 text-[#434966] hover:bg-gray-50 rounded-lg order-2 sm:order-1 transition-colors"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading || !validateForm()}
-                    className="w-full sm:w-1/2 px-6 py-3 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 transition-colors"
-                  >
-                    {loading ? "Saving..." : "Complete Profile"}
-                  </button>
-                </div>
-              </motion.div>
-            )}
+        {/* Qualifications Section */}
+        <div className="mt-8">
+          <h3 className="text-[#434966] text-lg font-semibold mb-4 flex items-center">
+            <GraduationCap className="w-5 h-5 mr-2 text-[#3a99b7]" />
+            Qualifications
+          </h3>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-[#434966] text-base">
+              {data?.user.doctorProfile?.qualifications || "No qualifications listed."}
+            </p>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,55 +1,121 @@
 "use client";
 
-import { useState } from "react";
+import axiosInstance from "@/lib/axiosInstance";
 import {
   Calendar,
+  ChevronRight,
   Clock,
   FileText,
-  User,
   MapPin,
-  ChevronRight,
-  Bell,
   Search,
+  User,
 } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
+import { format, formatDistanceToNow } from "date-fns";
+import { useState, useEffect } from "react";
+
+const convertToSLTime = (utcDate) => {
+  if (!utcDate) return "Not scheduled";
+  const date = new Date(utcDate);
+  return date.toLocaleString("en-US", {
+    timeZone: "Asia/Colombo",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+};
+
+const formatDate = (date) => {
+  if (!date) return "Not scheduled";
+  return format(new Date(date), "MMMM d, yyyy");
+};
+
+const AppointmentCard = ({ appointment, countdown }) => (
+  <div className="p-4 border border-[#e2e2e2] rounded-lg hover:border-[#3a99b7] transition-colors">
+    <div className="flex items-center gap-4 mb-4">
+      <div className="w-12 h-12 bg-[#3a99b7]/10 rounded-full flex items-center justify-center">
+        <User className="w-6 h-6 text-[#3a99b7]" />
+      </div>
+      <div>
+        <h3 className="font-medium text-[#232323]">
+          Dr. {appointment.doctor.name}
+        </h3>
+        <p className="text-sm text-[#82889c]">
+          {appointment.specialty || "General Consultation"}
+        </p>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+      <div className="flex items-center gap-2">
+        <Clock className="w-4 h-4 text-[#82889c]" />
+        <span className="text-sm text-[#232323]">
+          {convertToSLTime(appointment.time)}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Calendar className="w-4 h-4 text-[#82889c]" />
+        <span className="text-sm text-[#232323]">
+          {formatDate(appointment.date)}
+        </span>
+      </div>
+    </div>
+
+    <div className="flex items-start gap-2 mb-4">
+      <MapPin className="w-4 h-4 text-[#82889c] mt-0.5" />
+      <span className="text-sm text-[#232323]">
+        Room {appointment.room || "TBA"}
+      </span>
+    </div>
+
+    <div className="p-3 bg-[#3a99b7]/10 rounded-lg">
+      <p className="text-sm text-[#3a99b7] font-medium">
+        Time until appointment: {countdown}
+      </p>
+    </div>
+  </div>
+);
+
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 export default function DashboardPage() {
-  const upcomingAppointments = [
-    {
-      id: 1,
-      doctor: "Dr. Sarah Connor",
-      specialty: "Cardiologist",
-      date: "2024-03-08",
-      time: "10:30 AM",
-      room: "001",
-      status: "confirmed",
-    },
-    {
-      id: 2,
-      doctor: "Dr. John Smith",
-      specialty: "Neurologist",
-      date: "2024-03-10",
-      time: "2:15 PM",
-      room: "102",
-      status: "pending",
-    },
-  ];
+  const { data, error, isLoading } = useSWR("/user/dashboard", fetcher);
+  const [countdowns, setCountdowns] = useState({});
 
-  const recentPrescriptions = [
-    {
-      id: 1,
-      prescribedBy: "Dr. Sarah Connor",
-      date: "2024-03-01",
-      medicines: [
-        { name: "Amoxicillin", dosage: "500mg", frequency: "3 times daily" },
-        { name: "Paracetamol", dosage: "650mg", frequency: "Every 6 hours" },
-        { name: "Cetirizine", dosage: "10mg", frequency: "Once daily" },
-        { name: "Vitamin C", dosage: "500mg", frequency: "Once daily" },
-        { name: "Vitamin D3", dosage: "60,000 IU", frequency: "Once weekly" },
-        { name: "Zinc", dosage: "50mg", frequency: "Once daily" },
-      ],
-    },
-  ];
+  useEffect(() => {
+    if (data?.nextAppointment) {
+      const timer = setInterval(() => {
+        const newCountdowns = {};
+        data.nextAppointment.forEach((appointment) => {
+          const appointmentDate = new Date(appointment.date);
+          const now = new Date();
+
+          if (appointmentDate > now) {
+            newCountdowns[appointment.id] = formatDistanceToNow(
+              appointmentDate,
+              {
+                addSuffix: true,
+              }
+            );
+          } else {
+            newCountdowns[appointment.id] = "Appointment time passed";
+          }
+        });
+        setCountdowns(newCountdowns);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [data?.nextAppointment]);
+
+  if (error) {
+    return <div className="text-red-500">Failed to load dashboard data</div>;
+  }
+
+  if (isLoading) {
+    return <div className="text-[#82889c]">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -58,7 +124,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-[#232323]">
-              Welcome Back, John!
+              Welcome Back!
             </h1>
             <p className="text-[#82889c]">Here's your health summary</p>
           </div>
@@ -72,57 +138,31 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Next Appointment Card */}
+        {/* Next Appointments */}
         <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
           <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold text-[#232323]">
-                Next Appointment
+                Next Appointments
               </h2>
-              <p className="text-[#82889c] text-sm">Upcoming schedule</p>
+              <p className="text-[#82889c] text-sm">Upcoming schedules</p>
             </div>
             <Calendar className="w-5 h-5 text-[#3a99b7]" />
           </div>
 
-          {upcomingAppointments[0] && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#3a99b7]/10 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-[#3a99b7]" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-[#232323]">
-                    {upcomingAppointments[0].doctor}
-                  </h3>
-                  <p className="text-sm text-[#82889c]">
-                    {upcomingAppointments[0].specialty}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#82889c]" />
-                  <span className="text-sm text-[#232323]">
-                    {upcomingAppointments[0].time}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#82889c]" />
-                  <span className="text-sm text-[#232323]">
-                    {upcomingAppointments[0].date}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-[#82889c] mt-0.5" />
-                <span className="text-sm text-[#232323]">
-                 Room {upcomingAppointments[0].room}
-                </span>
-              </div>
-            </div>
-          )}
+          <div className="space-y-4">
+            {data?.nextAppointment?.length > 0 ? (
+              data.nextAppointment.map((appointment) => (
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  countdown={countdowns[appointment.id]}
+                />
+              ))
+            ) : (
+              <p className="text-[#82889c]">No upcoming appointments</p>
+            )}
+          </div>
         </div>
 
         {/* Recent Prescriptions */}
@@ -147,11 +187,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-4">
-            {recentPrescriptions.map((prescription) => (
-              <div
-                key={prescription.id}
-                className="p-4 rounded-lg border border-[#e2e2e2] hover:border-[#3a99b7] transition-colors"
-              >
+            {data?.prescription ? (
+              <div className="p-4 rounded-lg border border-[#e2e2e2] hover:border-[#3a99b7] transition-colors">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 bg-[#3a99b7]/10 rounded-full flex items-center justify-center">
                     <User className="w-6 h-6 text-[#3a99b7]" />
@@ -160,20 +197,20 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-[#82889c]" />
                       <span className="text-[#232323] font-medium">
-                        {prescription.prescribedBy}
+                        Dr. {data.prescription.doctor?.name || "Not specified"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <Calendar className="w-4 h-4 text-[#82889c]" />
                       <span className="text-sm text-[#82889c]">
-                        {prescription.date}
+                        {formatDate(data.prescription.prescriptionDate)}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {prescription.medicines.map((medicine, index) => (
+                  {data.prescription.medicine.map((medicine, index) => (
                     <div
                       key={index}
                       className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -188,7 +225,9 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
-            ))}
+            ) : (
+              <p className="text-[#82889c]">No recent prescriptions</p>
+            )}
           </div>
         </div>
 

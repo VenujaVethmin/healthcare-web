@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import axiosInstance from "@/lib/axiosInstance";
+import { motion } from "framer-motion";
 import {
-  Search,
-  MapPin,
+  Activity,
+  Building2,
   CalendarDays,
   DollarSign,
-  Edit,
-  Trash2,
-  Users,
-  Building2,
-  Activity,
+  Search,
+  Users
 } from "lucide-react";
-import { motion } from "framer-motion";
+import Link from "next/link";
+import { useState } from "react";
+import useSWR from "swr";
+
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 const doctorsList = [
   {
@@ -44,35 +46,39 @@ const doctorsList = [
 ];
 
 export default function DoctorsManagement() {
+
+  
+   const { data, error, isLoading } = useSWR("/admin/dashboard", fetcher);
+   
   const [searchQuery, setSearchQuery] = useState("");
   const [doctors, setDoctors] = useState(doctorsList);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-  const handlePublishToggle = (doctorId) => {
-    setDoctors(
-      doctors.map((doc) =>
-        doc.id === doctorId ? { ...doc, isPublished: !doc.isPublished } : doc
-      )
-    );
-  };
+  const handlePublishToggle = async (data) => {
 
-  const handleDeleteDoctor = (doctorId) => {
-    if (window.confirm("Are you sure you want to remove this doctor?")) {
-      setDoctors(doctors.filter((doc) => doc.id !== doctorId));
+    try {
+
+      const res = await axiosInstance.put(
+        `/admin/updatePublishStatus/${data.id}`,
+        {
+          isPublished: !data.isPublished,
+        }
+      );
+      if (res.status === 200) {
+        window.alert("Publish status updated successfully");
+      }
+      
+    } catch (error) {
+      console.error("Error updating publish status:", error);
     }
   };
 
-  const filteredDoctors = doctors.filter(
-    (doctor) =>
-      doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // Calculate total stats
   const totalStats = {
-    doctors: doctors.length,
-    patients: doctors.reduce((sum, doc) => sum + doc.totalPatients, 0),
-    appointments: doctors.reduce((sum, doc) => sum + doc.appointmentsToday, 0),
+    doctors: data?.doctorCount,
+    patients: data?.patientCount,
+    appointments: data?.todayAppointmentCount,
     revenue: doctors.reduce((sum, doc) => sum + doc.revenue, 0),
   };
 
@@ -157,9 +163,12 @@ export default function DoctorsManagement() {
             </h1>
             <p className="text-[#82889c]">Manage and monitor doctor profiles</p>
           </div>
-          <button className="px-4 py-2 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors">
+          <Link
+            href={"/admin/doctors"}
+            className="px-4 py-2 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+          >
             Add New Doctor
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -175,16 +184,12 @@ export default function DoctorsManagement() {
             className="w-full pl-12 pr-4 py-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7] text-[#434966]"
           />
         </div>
-        <select className="px-4 py-3 rounded-lg border border-[#e2e2e2] focus:outline-none focus:border-[#3a99b7] text-[#434966]">
-          <option value="">All Specialties</option>
-          <option value="cardiologist">Cardiologist</option>
-          <option value="pediatrician">Pediatrician</option>
-        </select>
+        
       </div>
 
       {/* Doctor Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredDoctors.map((doctor) => (
+        {data?.card?.map((doctor) => (
           <motion.div
             key={doctor.id}
             initial={{ opacity: 0, y: 20 }}
@@ -196,7 +201,7 @@ export default function DoctorsManagement() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-medium text-[#232323] text-lg">
-                    {doctor.name}
+                    {doctor.doctor.name}
                   </h3>
                   <p className="text-[#82889c]">{doctor.specialty}</p>
                 </div>
@@ -205,7 +210,7 @@ export default function DoctorsManagement() {
                     type="checkbox"
                     className="sr-only peer"
                     checked={doctor.isPublished}
-                    onChange={() => handlePublishToggle(doctor.id)}
+                    onChange={() => handlePublishToggle(doctor)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#3a99b7]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3a99b7]"></div>
                 </label>
@@ -213,10 +218,11 @@ export default function DoctorsManagement() {
 
               {/* Doctor Info */}
               <div className="space-y-2">
-                
                 <div className="flex items-center gap-2 text-sm text-[#82889c]">
                   <CalendarDays className="w-4 h-4" />
-                  <span>{doctor.appointmentsToday} appointments today</span>
+                  <span>
+                    {doctor.doctor._count.doctorAppointments} appointments today
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-[#82889c]">
                   <DollarSign className="w-4 h-4" />
@@ -227,21 +233,21 @@ export default function DoctorsManagement() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-[#82889c]">Total Patients</p>
+                  <p className="text-sm text-[#82889c]">Room</p>
                   <p className="text-lg font-medium text-[#232323]">
-                    {doctor.totalPatients}
+                    {doctor.room}
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-[#82889c]">Experience</p>
+                  <p className="text-sm text-[#82889c]">Ap. Duration</p>
                   <p className="text-lg font-medium text-[#232323]">
-                    {doctor.experience}
+                    {doctor.appointmentDuration} minutes
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-[#82889c]">Total Appointments</p>
+                  <p className="text-sm text-[#82889c]">Patients/Day</p>
                   <p className="text-lg font-medium text-[#232323]">
-                    {doctor.totalAppointments}
+                    {doctor.maxPatientsPerDay}
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
@@ -263,10 +269,7 @@ export default function DoctorsManagement() {
                 >
                   {doctor.isPublished ? "Published" : "Unpublished"}
                 </span>
-                <div className="flex items-center gap-2">
-                
-                  
-                </div>
+                <div className="flex items-center gap-2"></div>
               </div>
             </div>
           </motion.div>

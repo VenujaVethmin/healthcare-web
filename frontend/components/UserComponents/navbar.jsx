@@ -51,18 +51,7 @@ export default function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-6">
-            {/* Quick Actions */}
-            <div className="hidden md:flex items-center gap-4">
-              <button className="p-2.5 rounded-full hover:bg-[#f8f9fa] text-[#82889c] hover:text-[#3a99b7] transition-colors">
-                <Calendar className="w-5 h-5" />
-              </button>
-              <button className="p-2.5 rounded-full hover:bg-[#f8f9fa] text-[#82889c] hover:text-[#3a99b7] transition-colors">
-                <MessageSquare className="w-5 h-5" />
-              </button>
-              <button className="p-2.5 rounded-full hover:bg-[#f8f9fa] text-[#82889c] hover:text-[#3a99b7] transition-colors">
-                <Users className="w-5 h-5" />
-              </button>
-            </div>
+           
 
             {/* Divider */}
             <div className="hidden md:block w-px h-8 bg-[#e2e2e2]" />

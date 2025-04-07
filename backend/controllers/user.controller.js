@@ -6,16 +6,95 @@ export const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: req.user.id,
+        id: "cm8okqt7o0000ibo0gakxj8cr",
       },
       include: {
         userProfile: true,
+        prescriptions:{
+          take:1,
+          orderBy:{
+            createdAt:"desc"
+          }
+        }
       },
     });
 
     res.json({ user });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      location,
+      bio,
+      bloodType,
+      allergies,
+      emergencyContact,
+      image,
+    } = req.body;
+
+    // Input validation
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    // Get user ID from auth context (you should replace this with proper auth)
+    const userId = req.user?.id || "cm8okqt7o0000ibo0gakxj8cr"; // Ideally from auth middleware
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        image,
+        userProfile: {
+          upsert: {
+            update: {
+              phone: phone || null,
+              bio: bio || null,
+              bloodType: bloodType || null,
+              allergies: allergies || null,
+              emergencyContact: emergencyContact
+                ? {
+                    name: emergencyContact.name || null,
+                    phone: emergencyContact.phone || null,
+                  }
+                : null,
+              address: location || null,
+            },
+            create: {
+              phone: phone || null,
+              bio: bio || null,
+              bloodType: bloodType || null,
+              allergies: allergies || null,
+              emergencyContact: emergencyContact
+                ? {
+                    name: emergencyContact.name || null,
+                    phone: emergencyContact.phone || null,
+                  }
+                : null,
+              address: location || null,
+            },
+          },
+        },
+      },
+      include: { userProfile: true },
+    });
+
+    return res.status(200).json({ user: updatedUser });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return res.status(500).json({
+      error: "Failed to update profile",
+      message: error.message,
+    });
   }
 };
 export const findDoctors = async (req, res) => {
@@ -38,7 +117,12 @@ export const findDoctors = async (req, res) => {
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); // Get next day's UTC midnight
 
     const doctors = await prisma.user.findMany({
-      where: { role: "DOCTOR" },
+      where: {
+        role: "DOCTOR",
+        doctorBookingDetails: {
+          isPublished: true,
+        },
+      },
       include: {
         doctorBookingDetails: true,
         doctorProfile: true,
@@ -63,7 +147,6 @@ export const findDoctors = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 export const getUserBooking = async (req, res) => {
   try {
@@ -178,8 +261,6 @@ export const getUserBooking = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -308,7 +389,6 @@ export const bookAppointment = async (req, res) => {
         patientId,
         date: dateObj,
         time: appointmentTime,
-        
       },
     });
 
@@ -330,38 +410,106 @@ export const bookAppointment = async (req, res) => {
 // calender
 
 export const calender = async (req, res) => {
-
   try {
     const today = await prisma.appointment.findMany({
       where: {
         patientId: "cm8okqt7o0000ibo0gakxj8cr",
         date: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
-         
         },
 
         status: "Scheduled",
       },
       include: {
         doctor: {
-          select:{
+          select: {
             name: true,
-          }
+          },
         },
-        
       },
-    }); 
-
-
+    });
 
     return res.status(200).json({
       calender: today,
-      
     });
   } catch (error) {
-    
     res.status(500).json({ error: error.message });
-    
   }
+};
 
-}
+export const getPrescription = async (req, res) => {
+  try {
+    const prescriptions = await prisma.prescription.findMany({
+      where: {
+        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+      },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+          },
+        },
+        appointment: {
+          select: {
+            date: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json({ prescriptions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const dashboard = async (req, res) => {
+  try {
+    const nextAppointment = await prisma.appointment.findMany({
+      take: 2,
+      where: {
+        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        status: "Scheduled",
+        date: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+
+    const prescription = await prisma.prescription.findFirst({
+      where: {
+        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+      },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      nextAppointment,
+      prescription,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
