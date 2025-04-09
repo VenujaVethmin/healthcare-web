@@ -69,7 +69,7 @@ model Appointment {
   room      String?
   date      DateTime?
   time      DateTime? // Appointment start time
-
+  pStatus     pStatus?         @default(PENDING)
   status          AppointmentStatus @default(Scheduled)
   contact         String?
   paid            Boolean?          @default(false)
@@ -78,6 +78,12 @@ model Appointment {
 
   // One-to-many relationship with Prescription
   prescriptions Prescription?
+}
+
+enum pStatus {
+  PENDING
+  READY
+  COMPLETED
 }
 
 model Prescription {

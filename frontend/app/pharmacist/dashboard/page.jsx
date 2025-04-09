@@ -1,40 +1,18 @@
 "use client";
 
+import axiosInstance from "@/lib/axiosInstance";
 import { motion } from "framer-motion";
-import { Clock, Package2, CheckCircle, Pill as Pills } from "lucide-react";
-import { useState, useEffect } from "react";
+import { CheckCircle, Clock, Package2, Pill as Pills } from "lucide-react";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 
-const prescriptionData = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    doctorName: "Dr. Smith",
-    date: "2024-03-15",
-    status: "pending", // pending, ready, completed
-    medicines: [
-      {
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "Twice daily",
-        duration: "7 days",
-        quantity: 14,
-      },
-      {
-        name: "Paracetamol",
-        dosage: "650mg",
-        frequency: "As needed",
-        duration: "5 days",
-        quantity: 10,
-      },
-    ],
-  },
-  // Add more prescription data
-];
+const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 export default function PharmacistDashboard() {
+  const { data, error, isLoading } = useSWR("/pharmacist/dashboard", fetcher);
+  
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [prescriptions, setPrescriptions] = useState(prescriptionData);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [prescriptions, setPrescriptions] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -43,24 +21,49 @@ export default function PharmacistDashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (data?.data) {
+      setPrescriptions(data.data);
+    }
+  }, [data]);
+
   const stats = {
-    total: prescriptions.length,
-    pending: prescriptions.filter((p) => p.status === "pending").length,
-    ready: prescriptions.filter((p) => p.status === "ready").length,
-    completed: prescriptions.filter((p) => p.status === "completed").length,
+    total: data?.totalPrescriptions || 0,
+    pending: data?.pending || 0,
+    ready: data?.ready || 0,
+    completed: data?.completed || 0,
   };
 
-  const handleStatusChange = (prescriptionId, newStatus) => {
-    setPrescriptions(
-      prescriptions.map((prescription) =>
-        prescription.id === prescriptionId
-          ? { ...prescription, status: newStatus }
-          : prescription
-      )
-    );
+  const handleStatusChange = async (prescriptionId, newStatus) => {
+    try {
+      const res = await axiosInstance.put(
+        `/pharmacist/pstatus/${prescriptionId}`,
+        {
+          pStatus: newStatus,
+        }
+      );
+
+      if (res.status === 200) {
+        window.alert("Status updated successfully");
+        setPrescriptions(
+          prescriptions.map((prescription) =>
+            prescription.prescriptions.id === prescriptionId
+              ? { ...prescription, pStatus: newStatus }
+              : prescription
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      window.alert("Failed to update status");
+    }
   };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading dashboard</div>;
 
   return (
+    // ... rest of your JSX remains the same
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
@@ -156,36 +159,36 @@ export default function PharmacistDashboard() {
       {/* Prescriptions List */}
       <div className="bg-white rounded-xl border border-black/10 p-6">
         <div className="space-y-4">
-          {prescriptions.map((prescription) => (
+          {prescriptions.map((item) => (
             <div
-              key={prescription.id}
+              key={item.prescriptions.id}
               className="border border-gray-200 rounded-lg p-4"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="font-medium text-lg">
-                    {prescription.patientName}
-                  </h3>
+                  <h3 className="font-medium text-lg">{item.patient.name}</h3>
                   <p className="text-[#82889c]">
-                    Prescribed by: {prescription.doctorName}
+                    Prescribed by: {item.doctor.name}
                   </p>
-                  <p className="text-[#82889c]">Date: {prescription.date}</p>
+                  <p className="text-[#82889c]">
+                    Date: {new Date(item.date).toLocaleDateString()}
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  {prescription.status === "pending" && (
+                  {item.pStatus === "PENDING" && (
                     <button
                       onClick={() =>
-                        handleStatusChange(prescription.id, "ready")
+                        handleStatusChange(item.prescriptions.id, "READY")
                       }
                       className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
                     >
                       Mark Ready
                     </button>
                   )}
-                  {prescription.status === "ready" && (
+                  {item.pStatus === "READY" && (
                     <button
                       onClick={() =>
-                        handleStatusChange(prescription.id, "completed")
+                        handleStatusChange(item.prescriptions.id, "COMPLETED")
                       }
                       className="px-4 py-2 bg-green-500 text-white rounded-lg"
                     >
@@ -194,15 +197,14 @@ export default function PharmacistDashboard() {
                   )}
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      prescription.status === "pending"
+                      item.pStatus === "PENDING"
                         ? "bg-orange-100 text-orange-800"
-                        : prescription.status === "ready"
+                        : item.pStatus === "READY"
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-green-100 text-green-800"
                     }`}
                   >
-                    {prescription.status.charAt(0).toUpperCase() +
-                      prescription.status.slice(1)}
+                    {item.pStatus}
                   </span>
                 </div>
               </div>
@@ -210,7 +212,7 @@ export default function PharmacistDashboard() {
               <div className="mt-4">
                 <h4 className="font-medium mb-2">Medicines:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {prescription.medicines.map((medicine, idx) => (
+                  {item?.prescriptions?.medicine.map((medicine, idx) => (
                     <div key={idx} className="bg-gray-50 p-3 rounded-lg">
                       <p className="font-medium">{medicine.name}</p>
                       <p className="text-sm text-[#82889c]">
@@ -218,9 +220,6 @@ export default function PharmacistDashboard() {
                       </p>
                       <p className="text-sm text-[#82889c]">
                         Duration: {medicine.duration}
-                      </p>
-                      <p className="text-sm text-[#82889c]">
-                        Quantity: {medicine.quantity} units
                       </p>
                     </div>
                   ))}

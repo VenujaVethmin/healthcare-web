@@ -499,6 +499,11 @@ export const dashboard = async (req, res) => {
             name: true,
           },
         },
+        appointment:{
+          select:{
+            pStatus:true,
+          }
+        }
       },
       orderBy: {
         createdAt: "desc",
