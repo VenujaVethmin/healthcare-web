@@ -113,15 +113,10 @@ export default function EditProfilePage() {
       let imageUrl = data?.user?.image;
       if (imageFile) {
         const imageFormData = new FormData();
-        imageFormData.append("image", imageFile);
+        imageFormData.append("imageFormData", imageFile);
         const imageResponse = await axiosInstance.post(
-          "/user/upload-image",
-          imageFormData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
+          "/cloudinary/profileImage",
+          imageFormData
         );
         imageUrl = imageResponse.data.url;
       }

@@ -14,6 +14,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import e from "cors";
 import pharmacistRoute from "./routes/pharmacist.route.js";
+import cloudinaryRoute from "./routes/cloudinary.route.js";
 
 const prisma = new PrismaClient();
 dotenv.config();
@@ -136,6 +137,7 @@ app.use("/api/doctor", doctorRoute);
 app.use("/api/admin", adminRoute);
 app.use("/api/test", testRoute);
 app.use("/api/pharmacist", pharmacistRoute);
+app.use("/api/cloudinary", cloudinaryRoute);
 
 app.listen(3001, () => {
   console.log("Server started on port 3001");

@@ -15,10 +15,7 @@ const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 export default function EditDoctorProfilePage() {
   const router = useRouter();
-  const { data, error, isLoading, mutate } = useSWR(
-    "/doctor/profile",
-    fetcher
-  );
+  const { data, error, isLoading, mutate } = useSWR("/doctor/profile", fetcher);
 
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -33,7 +30,6 @@ export default function EditDoctorProfilePage() {
     experience: "",
     qualifications: "",
     education: "",
-    
   });
 
   useEffect(() => {
@@ -45,7 +41,6 @@ export default function EditDoctorProfilePage() {
         experience: data.user.doctorProfile?.experience || "",
         qualifications: data.user.doctorProfile?.qualifications || "",
         education: data.user.doctorProfile?.education || "",
-       
       });
       setPreviewUrl(data.user.image);
     }
@@ -92,13 +87,10 @@ export default function EditDoctorProfilePage() {
       let imageUrl = data?.user?.image;
       if (imageFile) {
         const imageFormData = new FormData();
-        imageFormData.append("image", imageFile);
+        imageFormData.append("imageFormData", imageFile);
         const imageResponse = await axiosInstance.post(
-          "/api/user/upload-image", // Ensure this endpoint exists
-          imageFormData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
+          "/cloudinary/profileImage",
+          imageFormData
         );
         imageUrl = imageResponse.data.url;
       }
@@ -255,7 +247,6 @@ export default function EditDoctorProfilePage() {
                 className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3a99b7]"
               />
             </div>
-           
           </div>
         </div>
 

@@ -8,7 +8,7 @@ const nextConfig = {
       "i.pravatar.cc",
       "lh3.googleusercontent.com",
       "replicate.delivery",
-      "example.com", // Added this line
+      "res.cloudinary.com", 
     ],
   },
 };
