@@ -10,6 +10,7 @@ const nextConfig = {
       "replicate.delivery",
       "res.cloudinary.com",
       "img.freepik.com",
+      "ui-avatars.com"
     ],
   },
 };

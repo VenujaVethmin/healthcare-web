@@ -16,7 +16,6 @@ import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
-
 const dosageOptions = [
   "50mg",
   "100mg",
@@ -79,7 +78,7 @@ export default function DoctorDashboard() {
 
   const handleViewProfile = async (patientId) => {
     try {
-      router.push(`/doctor/dashboard/profile/${patientId}`);
+      router.push(`/doctor/patients/${patientId}`);
     } catch (error) {
       console.error("Error navigating to patient profile:", error);
       alert("Failed to view patient profile");
@@ -160,11 +159,12 @@ const handleSubmitPrescription = async (appointment) => {
     // Refresh dashboard data
     mutate();
     
-    toast.success("Prescription submitted successfully");
+    toast.success("Prescription submitted successfully")
   } catch (error) {
-    console.error("Error submitting prescription:", error);
     
-    toast.error("Failed to submit prescription");
+   
+    toast.error("Failed to submit prescription")
+
   }
 };
 
@@ -291,13 +291,8 @@ const handleSubmitPrescription = async (appointment) => {
                       <h3 className="font-medium text-[#232323]">
                         {appointment.patient.name}
                       </h3>
-                      <p className="text-sm text-[#82889c] mt-1">
-                        {appointment.patient.age} years •{" "}
-                        {appointment.patient.gender}
-                      </p>
-                      <p className="text-sm text-[#82889c] mt-1">
-                        Number: {appointment.number}
-                      </p>
+                      
+                     
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="w-4 h-4 text-[#82889c]" />
                         <span className="text-sm text-[#82889c]">
@@ -319,7 +314,7 @@ const handleSubmitPrescription = async (appointment) => {
                       </button>
 
                       <button
-                        onClick={() => handleStartAppointment(appointment?.patient?.id)}
+                        onClick={() => handleStartAppointment(appointment.id)}
                         className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
                       >
                         {expandedAppointment === appointment.id
@@ -461,7 +456,8 @@ const handleSubmitPrescription = async (appointment) => {
             </motion.div>
           ))}
 
-          {!data?.appointments?.length && (
+        
+          {!data?.appoinments?.length && (
             <p className="text-center text-[#82889c] py-4">
               No appointments scheduled for today
             </p>

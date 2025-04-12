@@ -120,7 +120,7 @@ export default function BookAppointment() {
       // console.log("hi")
       // console.log(appointmentDate.toISOString());
 
-      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/bookAppoitnment`, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/bookAppoitnment`, {
         doctorId: params.id,
         date: appointmentDate,
       });
@@ -133,7 +133,7 @@ export default function BookAppointment() {
       setBookingStep(1);
       router.push("/user/dashboard"); // Redirect to appointments page
     } catch (err) {
-      console.error(err);
+      console.error(err); 
       setError(err.response?.data?.error || "Error booking appointment");
     } finally {
       setLoading(false);

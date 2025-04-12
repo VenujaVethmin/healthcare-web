@@ -120,7 +120,7 @@ model DoctorBookingDetails {
   doctorId            String   @unique
   doctor              User     @relation(fields: [doctorId], references: [id])
   specialty           String?  @default("General Practitioner")
-  room                String?  @default("Room 1")
+  room                String?  @default("001")
   appointmentDuration Int?
   maxPatientsPerDay   Int?
   consultationFee     Float?

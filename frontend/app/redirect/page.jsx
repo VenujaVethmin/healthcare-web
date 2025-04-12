@@ -65,6 +65,9 @@ export default function Redirect() {
         case "ADMIN":
           router.push("/admin/dashboard");
           break;
+           case "PHARMACIST":
+          router.push("/pharmacist/dashboard");
+          break;
         default:
           router.push("/login");
       }

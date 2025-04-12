@@ -7,12 +7,12 @@ import {
   HelpCircle,
   LayoutDashboard,
   LogOut,
-  UserCircle2
+  UserCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { logOut } from "@/hooks/auth-hooks";
 
 const menuItems = [
@@ -31,7 +31,6 @@ const menuItems = [
     path: "/doctor/profile",
     icon: UserCircle2,
   },
- 
 ];
 
 const SidebarContent = ({ isMobile = false }) => {
@@ -43,18 +42,13 @@ const SidebarContent = ({ isMobile = false }) => {
       {/* Logo - Hide on mobile bottom nav */}
       {!isMobile && (
         <div className="p-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative">
-              <div className="absolute rounded-lg bg-[#3a99b7] " />
-              <div className="relative w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <Heart className="w-5 h-5 text-[#3a99b7]" />
-              </div>
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#3a99b7] rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-2xl font-bold text-white">H</span>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-[#3a99b7]">Healthi</h1>
-              <p className="text-[10px] text-[#3a99b7]/80">
-                Healthcare Platform
-              </p>
+              <span className="text-xl font-bold text-[#232323]">Healthi</span>
+              <span className="text-sm text-gray-500">Healthcare Platform</span>
             </div>
           </Link>
         </div>
@@ -121,9 +115,10 @@ const SidebarContent = ({ isMobile = false }) => {
           <motion.button
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => logOut(router)}
             className="flex w-full items-center gap-2 p-2 rounded-lg hover:bg-[#3a99b7]/5 transition-colors group"
           >
-            <LogOut onClick={() => logOut(router)} className="w-[18px] h-[18px] text-[#7E7E7E] group-hover:text-[#3a99b7]" />
+            <LogOut className="w-[18px] h-[18px] text-[#7E7E7E] group-hover:text-[#3a99b7]" />
             <span className="text-sm text-[#7E7E7E] group-hover:text-[#3a99b7]">
               Logout
             </span>
@@ -139,8 +134,6 @@ export default function Sidebar() {
 
   return (
     <>
-      
-
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e2e2e2] shadow-lg z-40 md:hidden">
         <SidebarContent isMobile={true} />

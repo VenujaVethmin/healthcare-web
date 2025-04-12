@@ -2,6 +2,7 @@
 import Navbar from "@/components/UserComponents/navbar";
 import Sidebar from "@/components/UserComponents/sidebar";
 import { Toaster } from "sonner";
+import Footer from "../../components/footer";
 
 export default function RootLayout({ children }) {
   return (
@@ -15,6 +16,7 @@ export default function RootLayout({ children }) {
           {" "}
           {/* Navbar height offset */}
           <div className="max-w-7xl mx-auto pt-4 pb-20 ">{children}</div>
+          <Footer />
         </main>
         <Toaster />
       </div>

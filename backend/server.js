@@ -129,6 +129,7 @@ app.get("/me", ensureAuthenticated, (req, res) => {
     name: req.user.name,
     email: req.user.email,
     role: req.user.role,
+    image:req.user.image
   });
 });
 

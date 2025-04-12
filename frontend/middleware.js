@@ -42,6 +42,9 @@ export async function middleware(request) {
     if (currentPath.startsWith("/admin") && user.role !== "ADMIN") {
       return unauthorizedResponse("This page is only for Administrators.");
     }
+     if (currentPath.startsWith("/pharmacist") && user.role !== "PHARMACIST") {
+      return unauthorizedResponse("This page is only for Pharmacist.");
+    }
 
     // Store user info in cookies for frontend access
     const response = NextResponse.next();
@@ -200,5 +203,5 @@ function unauthorizedResponse(message) {
 }
 
 export const config = {
-  matcher: ["/user/:path*", "/doctor/:path*", "/admin/:path*"],
+  matcher: ["/user/:path*", "/doctor/:path*", "/admin/:path*" , "/pharmacist/:path* "],
 };

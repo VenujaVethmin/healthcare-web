@@ -73,8 +73,8 @@ export default function LoginPage() {
         router.push("/redirect");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      setError(error.response?.data?.message || "Failed to login");
+      
+      setError(error.response?.data?.message || "Failed to login check your credentials again ");
     } finally {
       setIsLoading(false);
     }

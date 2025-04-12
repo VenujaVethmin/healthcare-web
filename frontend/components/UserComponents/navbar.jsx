@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, ChevronDown, User } from "lucide-react";
+import { Bell, ChevronDown, User ,Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logOut } from "@/hooks/auth-hooks";
+import useSession from "@/hooks/session";
+import Image from "next/image"; //
 
 export default function Navbar() {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const { user, isLoading, error } = useSession();
+
   const profileMenuItems = [
     {
       label: "My Profile",
       icon: User,
-      href: "/doctor/profile",
+      href: "/user/profile",
     },
   ];
 
@@ -30,6 +34,7 @@ export default function Navbar() {
               href="/user/find-doctors"
               className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
             >
+              <Search className="w-4 h-4" />
               <span className="text-sm font-medium">Find Doctors</span>
             </Link>
 
@@ -60,19 +65,24 @@ export default function Navbar() {
                 className="flex items-center gap-3 pl-2 pr-3 py-2 rounded-full hover:bg-[#f8f9fa] transition-colors"
               >
                 <div className="relative w-9 h-9">
-                  <img
-                    src="https://ui-avatars.com/api/?name=Stevan+Dux&background=3a99b7&color=fff"
-                    alt="Profile"
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                 <Image
+  src={
+    user?.image ||
+    `https://ui-avatars.com/api/?name=User&background=3a99b7&color=fff&size=128`
+  }
+  alt="Profile"
+  className="rounded-full object-cover"
+  width={36}
+  height={36}
+/>
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
                 </div>
                 <div className="hidden md:flex items-center gap-2">
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium text-[#232323]">
-                      Stevan Dux
+                      {user?.name}
                     </span>
-                    <span className="text-xs text-[#82889c]">Doctor</span>
+                    <span className="text-xs text-[#82889c]">{user?.role}</span>
                   </div>
                   <ChevronDown
                     className={`w-4 h-4 text-[#82889c] transition-transform duration-200 ${
