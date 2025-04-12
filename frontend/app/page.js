@@ -1,262 +1,237 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Search,
-  Clock,
-  CheckCircle,
-  MessageSquare,
-  Activity,
-} from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
 
-const doctors = [
-  {
-    id: 1,
-    name: "Dr. Sarah Johnson",
-    specialty: "Pediatric Specialist",
-    experience: "12 years experience",
-    avatar: "https://i.pravatar.cc/65?img=1",
-    badge: "Pediatric",
-    schedule: "Mon, Wed, Fri",
-    timing: "09:00 AM-05:00 PM",
-    fee: "2500",
-  },
-  {
-    id: 2,
-    name: "Dr. Michael Chen",
-    specialty: "Cardiology Specialist",
-    experience: "15 years experience",
-    avatar: "https://i.pravatar.cc/65?img=2",
-    badge: "Cardiology",
-    schedule: "Tue, Thu",
-    timing: "10:00 AM-06:00 PM",
-    fee: "3000",
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Davis",
-    specialty: "Dental Surgeon",
-    experience: "8 years experience",
-    avatar: "https://i.pravatar.cc/65?img=3",
-    badge: "Dentistry",
-    schedule: "Wed, Sat",
-    timing: "11:00 AM-07:00 PM",
-    fee: "2800",
-  },
-];
+export default function Hero() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const features = [
-  {
-    icon: Clock,
-    title: "24/7 Availability",
-    description: "Access healthcare services anytime, anywhere",
-  },
-  {
-    icon: CheckCircle,
-    title: "Verified Doctors",
-    description: "All our doctors are verified professionals",
-  },
-  {
-    icon: MessageSquare,
-    title: "Instant Consultation",
-    description: "Connect with doctors instantly",
-  },
-];
+  const features = [
+    {
+      number: "24/7",
+      label: "Medical Support",
+      image:
+        "https://images.unsplash.com/photo-1587556590582-927ced50c126?q=80&w=500&auto=format&fit=crop",
+      description: "Round-the-clock medical assistance at your fingertips",
+    },
+    {
+      number: "100%",
+      label: "Patient Privacy",
+      image:
+        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=500&auto=format&fit=crop",
+      description: "Your data is secure and confidential",
+    },
+    {
+      number: "Fast",
+      label: "Online Booking",
+      image:
+        "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=500&auto=format&fit=crop",
+      description: "Schedule appointments with just a few clicks",
+    },
+    {
+      number: "Expert",
+      label: "Healthcare",
+      image:
+        "https://images.unsplash.com/photo-1527613426441-4da17471b66d?q=80&w=500&auto=format&fit=crop",
+      description: "Professional medical care from qualified doctors",
+    },
+  ];
 
-export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#eafefa] to-white">
       {/* Navbar */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b border-[#e2e2e2] z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3a99b7] to-[#2d7a93] flex items-center justify-center">
-                <Activity className="w-5 h-5 text-white" />
+      <nav className="fixed top-0 left-0 right-0 z-50">
+        <div className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-20">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#3a99b7] rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl font-bold text-white">H</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-[#232323]">
+                    Healthi
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Healthcare Platform
+                  </span>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center gap-10">
+                <Link href="/about" className="nav-link">
+                  About
+                </Link>
+
+                <Link href="/help-support" className="nav-link">
+                  Help & Support
+                </Link>
+                <div className="flex items-center gap-4 ml-4">
+                  <Link
+                    href="/login"
+                    className="px-6 py-2.5 text-[#3a99b7] font-medium hover:text-[#2d7a93] transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/redirect"
+                    className="px-6 py-2.5 text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md hover:shadow-lg"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-[#3a99b7] to-[#2d7a93] bg-clip-text text-transparent">
-                Healthi
-              </span>
-            </Link>
 
-            <p> patient section here <Link href={"/user/dashboard"}>[click]</Link></p>
-
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/login"
-                className="hidden md:inline-flex text-gray-600 hover:text-[#3a99b7] transition-colors"
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-[#3a99b7] text-white px-6 py-2 rounded-lg hover:bg-[#2d7a93] transition-colors"
-              >
-                Register
-              </Link>
+                {isMenuOpen ? (
+                  <X className="w-6 h-6 text-gray-600" />
+                ) : (
+                  <Menu className="w-6 h-6 text-gray-600" />
+                )}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="md:hidden bg-white border-t border-gray-100"
+            >
+              <div className="px-4 py-4 space-y-4">
+                <Link href="/about" className="mobile-nav-link">
+                  About
+                </Link>
+                <Link href="/services" className="mobile-nav-link">
+                  Services
+                </Link>
+                <Link href="/doctors" className="mobile-nav-link">
+                  Find Doctors
+                </Link>
+                <Link href="/support" className="mobile-nav-link">
+                  Help & Support
+                </Link>
+                <div className="pt-4 space-y-3">
+                  <Link
+                    href="/login"
+                    className="block w-full px-4 py-3 text-center text-[#3a99b7] border-2 border-[#3a99b7] rounded-xl font-medium hover:bg-[#3a99b7] hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/redirect"
+                    className="block w-full px-4 py-3 text-center text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md"
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-      </header>
+      </nav>
 
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-gradient-to-br from-[#3a99b7] to-[#2d7a93] text-white rounded-2xl p-12 relative overflow-hidden"
-          >
-            {/* Decorative Elements */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 items-center relative">
-              <div className="space-y-6">
-                <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                  Quality Healthcare at Your Fingertips
-                </h1>
-                <p className="text-xl text-white/80">
-                  Connect with top doctors online for consultations anytime,
-                  anywhere
-                </p>
-                <div className="flex items-center space-x-4">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map((i) => (
-                      <img
-                        key={i}
-                        src={`https://i.pravatar.cc/40?img=${i}`}
-                        alt={`Doctor ${i}`}
-                        className="w-10 h-10 rounded-full border-2 border-white"
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white/80">+180 doctors online</span>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-xl">
-                <h3 className="text-gray-800 text-xl font-semibold mb-4">
-                  Find your doctor
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center bg-gray-50 rounded-lg p-2">
-                    <input
-                      type="text"
-                      placeholder="Search by name, specialty..."
-                      className="w-full px-4 py-2 bg-transparent outline-none text-gray-800"
-                    />
-                    <button className="bg-[#3a99b7] text-white p-2 rounded-lg hover:bg-[#2d7a93] transition-colors">
-                      <Search className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {["Pediatric", "Cardiology", "Dentistry", "Neurology"].map(
-                      (specialty) => (
-                        <span
-                          key={specialty}
-                          className="px-3 py-1 bg-[#eafefa] text-[#3a99b7] rounded-full text-sm cursor-pointer hover:bg-[#3a99b7] hover:text-white transition-colors"
-                        >
-                          {specialty}
-                        </span>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Doctors Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Meet Our Specialists</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Book appointments with qualified doctors and specialists
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {doctors.map((doctor, index) => (
-              <motion.div
-                key={doctor.id}
+      {/* Main Content */}
+      <div className="pt-28">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-center lg:text-left"
+            >
+              <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300"
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#232323] leading-tight"
               >
-                <div className="flex items-start space-x-4">
-                  <img
-                    src={doctor.avatar}
-                    alt={doctor.name}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold">{doctor.name}</h3>
-                    <p className="text-gray-600 text-sm">{doctor.specialty}</p>
-                    <span className="inline-block px-3 py-1 bg-[#eafefa] text-[#3a99b7] rounded-full text-xs mt-2">
-                      {doctor.badge}
-                    </span>
-                  </div>
-                </div>
+                Your Health is Our
+                <span className="text-[#3a99b7]"> Priority</span>
+              </motion.h1>
 
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex justify-between items-center text-sm">
-                    <div>
-                      <p className="font-medium">{doctor.schedule}</p>
-                      <p className="text-gray-500">{doctor.timing}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">LKR {doctor.fee}</p>
-                      <p className="text-gray-500">Per Visit</p>
-                    </div>
-                  </div>
-                  <button className="w-full mt-4 bg-[#3a99b7] text-white py-2 rounded-lg hover:bg-[#2d7a93] transition-colors">
-                    Book Appointment
-                  </button>
-                </div>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0"
+              >
+                Experience healthcare that puts you first. Book appointments,
+                consult with experts, and manage your health journey all in one
+                place.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.8 }}
+                className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              >
+                <Link
+                  href="/redirect"
+                  className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white bg-[#3a99b7] rounded-xl hover:bg-[#2d7a93] transition-colors duration-300 shadow-md hover:shadow-lg"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link
+                  href="/about"
+                  className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-[#3a99b7] bg-[#eafefa] rounded-xl hover:bg-[#d7f7f7] transition-colors duration-300"
+                >
+                  Learn More
+                </Link>
               </motion.div>
-            ))}
-          </div>
-        </section>
+            </motion.div>
 
-        {/* Features Section */}
-        <section className="bg-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Why Choose Us</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Experience the best healthcare service with our platform
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
+            {/* Feature Cards */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="grid grid-cols-2 gap-8"
+            >
               {features.map((feature, index) => (
                 <motion.div
-                  key={feature.title}
+                  key={feature.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2 }}
-                  className="p-6 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md transition-all duration-300"
+                  transition={{ duration: 0.8, delay: 0.8 + index * 0.1 }}
+                  className="bg-white rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all duration-300 group"
                 >
-                  <div className="w-12 h-12 bg-[#eafefa] rounded-xl flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-[#3a99b7]" />
+                  <div className="relative h-32 mb-4 rounded-xl overflow-hidden">
+                    <Image
+                      src={feature.image}
+                      alt={feature.label}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {feature.title}
+                  <h3 className="text-2xl font-bold text-[#3a99b7]">
+                    {feature.number}
                   </h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <p className="mt-2 text-gray-600">{feature.label}</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {feature.description}
+                  </p>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,8 @@ const nextConfig = {
       "i.pravatar.cc",
       "lh3.googleusercontent.com",
       "replicate.delivery",
-      "res.cloudinary.com", 
+      "res.cloudinary.com",
+      "img.freepik.com",
     ],
   },
 };

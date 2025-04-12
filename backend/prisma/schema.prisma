@@ -24,6 +24,16 @@ model User {
   prescriptions        Prescription[]        @relation("Patient")
   doctorPrescriptions  Prescription[]        @relation("Doctor")
   doctorBookingDetails DoctorBookingDetails?
+  medicalRecords       MedicalRecord[]
+}
+
+model MedicalRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name    String?
+  link      String?
+  createdAt DateTime @default(now())
 }
 
 enum Role {
@@ -34,42 +44,42 @@ enum Role {
 }
 
 model UserProfile {
-  id      String    @id @default(cuid())
-  userId  String    @unique
-  user    User      @relation(fields: [userId], references: [id])
-  phone   String?
-  address String?
-  dob     DateTime?
-  bio     String? @default("hi hello")
-  bloodType String?
-  allergies String?
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  phone            String?
+  address          String?
+  dob              DateTime?
+  bio              String?   @default("hi hello")
+  bloodType        String?
+  allergies        String?
   emergencyContact Json?
 }
 
 model DoctorProfile {
-  id           String  @id @default(cuid())
-  userId       String  @unique
-  user         User    @relation(fields: [userId], references: [id])
-  bio         String? @default("hi hello")
-  specialty    String?
-  experience   String?
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id])
+  bio            String? @default("hi hello")
+  specialty      String?
+  experience     String?
   qualifications String?
-  education    String?
-  availability String?
+  education      String?
+  availability   String?
 }
 
 model Appointment {
-  id        String    @id @default(cuid())
-  doctorId  String
-  doctor    User      @relation("Doctor", fields: [doctorId], references: [id])
-  patientId String
-  patient   User      @relation("Patient", fields: [patientId], references: [id])
-  specialty String?
-  number    Int?
-  room      String?
-  date      DateTime?
-  time      DateTime? // Appointment start time
-  pStatus     pStatus?         @default(PENDING)
+  id              String            @id @default(cuid())
+  doctorId        String
+  doctor          User              @relation("Doctor", fields: [doctorId], references: [id])
+  patientId       String
+  patient         User              @relation("Patient", fields: [patientId], references: [id])
+  specialty       String?
+  number          Int?
+  room            String?
+  date            DateTime?
+  time            DateTime? // Appointment start time
+  pStatus         pStatus?          @default(PENDING)
   status          AppointmentStatus @default(Scheduled)
   contact         String?
   paid            Boolean?          @default(false)
@@ -97,9 +107,8 @@ model Prescription {
   prescriptionDate DateTime    @default(now())
   medicine         Json?
   notes            String?
-  createdAt       DateTime    @default(now())
+  createdAt        DateTime    @default(now())
 }
-
 
 enum AppointmentStatus {
   Scheduled
@@ -110,8 +119,8 @@ model DoctorBookingDetails {
   id                  String   @id @default(cuid())
   doctorId            String   @unique
   doctor              User     @relation(fields: [doctorId], references: [id])
-  specialty           String? @default("General Practitioner")
-  room               String? @default("Room 1")
+  specialty           String?  @default("General Practitioner")
+  room                String?  @default("Room 1")
   appointmentDuration Int?
   maxPatientsPerDay   Int?
   consultationFee     Float?

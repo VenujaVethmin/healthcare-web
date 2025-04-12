@@ -1,29 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Bell,
-  Calendar,
-  MessageSquare,
-  ChevronDown,
-  Users,
-  Search,
-} from "lucide-react";
+import { Bell, ChevronDown, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import useSession from "@/hooks/session";
+import { useRouter } from "next/navigation";
+import { logOut } from "@/hooks/auth-hooks";
 
 export default function Navbar() {
-
-
-  const { user, isLoading, error } = useSession();
-
-
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const notifications = [
-    { type: "appointment", message: "Upcoming appointment in 30 minutes" },
-    { type: "message", message: "New message from Dr. Sarah" },
+  const profileMenuItems = [
+    {
+      label: "My Profile",
+      icon: User,
+      href: "/doctor/profile",
+    },
   ];
 
   return (
@@ -31,43 +24,35 @@ export default function Navbar() {
       <div className="bg-white border-b border-[#e2e2e2]">
         <div className="px-6 h-16 flex items-center justify-between">
           {/* Left Section */}
-          <div>
-            {/* Mobile Title */}
-            <div className="md:hidden">
-              <h1 className="text-lg font-bold text-[#3a99b7]">Healthi</h1>
-              <p className="text-xs text-[#82889c]">Healthcare Platform</p>
-            </div>
+          <div className="flex items-center gap-6">
             {/* Find Doctors Button */}
-            <div className="hidden md:block">
-              <Link
-                href="/user/find-doctors"
-                className="flex items-center gap-2 px-4 py-2 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
-              >
-                <Search className="w-4 h-4" />
-                <span className="text-sm font-medium">Find Doctors</span>
+            <Link
+              href="/user/find-doctors"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
+            >
+              <span className="text-sm font-medium">Find Doctors</span>
+            </Link>
+
+            {/* Mobile Logo */}
+            <div className="md:hidden">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#3a99b7] rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl font-bold text-white">H</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-[#232323]">
+                    Healthi
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Healthcare Platform
+                  </span>
+                </div>
               </Link>
             </div>
           </div>
 
           {/* Right Section */}
           <div className="flex items-center gap-6">
-           
-
-            {/* Divider */}
-            <div className="hidden md:block w-px h-8 bg-[#e2e2e2]" />
-
-            {/* Notifications */}
-            <div className="relative">
-              <button className="p-2.5 rounded-full hover:bg-[#f8f9fa] text-[#82889c] hover:text-[#3a99b7] transition-colors">
-                <Bell className="w-5 h-5" />
-                {notifications.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#fa6161] text-white text-[10px] font-medium rounded-full flex items-center justify-center">
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-            </div>
-
             {/* Profile */}
             <div className="relative">
               <button
@@ -85,7 +70,7 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-2">
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium text-[#232323]">
-                      {user?.name}
+                      Stevan Dux
                     </span>
                     <span className="text-xs text-[#82889c]">Doctor</span>
                   </div>
@@ -106,12 +91,24 @@ export default function Navbar() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e2e2e2] overflow-hidden"
                   >
-                   
                     <div className="p-1.5">
-                      
+                      {profileMenuItems.map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-[#434966] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.label}
+                        </Link>
+                      ))}
                     </div>
-                    <div className="p-1.5  border-[#e2e2e2]">
-                      <button className="w-full px-3 py-2 text-sm text-left text-[#fa6161] hover:bg-[#f8f9fa] rounded-md transition-colors">
+                    <div className="p-1.5 border-t border-[#e2e2e2]">
+                      <button
+                        onClick={() => logOut(router)}
+                        className="w-full px-3 py-2 text-sm text-left text-[#fa6161] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                      >
                         Sign Out
                       </button>
                     </div>

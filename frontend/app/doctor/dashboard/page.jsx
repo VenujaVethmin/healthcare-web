@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
 
 const dosageOptions = [
   "50mg",
@@ -78,7 +79,7 @@ export default function DoctorDashboard() {
 
   const handleViewProfile = async (patientId) => {
     try {
-      router.push(`/doctor/patients/${patientId}`);
+      router.push(`/doctor/dashboard/profile/${patientId}`);
     } catch (error) {
       console.error("Error navigating to patient profile:", error);
       alert("Failed to view patient profile");
@@ -158,10 +159,12 @@ const handleSubmitPrescription = async (appointment) => {
 
     // Refresh dashboard data
     mutate();
-    alert("Prescription submitted successfully");
+    
+    toast.success("Prescription submitted successfully");
   } catch (error) {
     console.error("Error submitting prescription:", error);
-    alert("Failed to submit prescription");
+    
+    toast.error("Failed to submit prescription");
   }
 };
 
@@ -316,7 +319,7 @@ const handleSubmitPrescription = async (appointment) => {
                       </button>
 
                       <button
-                        onClick={() => handleStartAppointment(appointment.id)}
+                        onClick={() => handleStartAppointment(appointment?.patient?.id)}
                         className="px-4 py-2 text-sm bg-[#3a99b7] text-white rounded-lg hover:bg-[#2d7a93] transition-colors"
                       >
                         {expandedAppointment === appointment.id

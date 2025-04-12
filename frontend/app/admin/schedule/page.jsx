@@ -3,6 +3,7 @@
 import axiosInstance from "@/lib/axiosInstance";
 import { Save, Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import useSWR from "swr";
 
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
@@ -41,11 +42,13 @@ export default function DoctorSettings() {
       if (response.data.success) {
         await mutate();
         setHasChanges((prev) => ({ ...prev, [doctorId]: false }));
-        window.alert("Settings saved successfully!");
+     
+         toast.success("Settings saved successfully!");
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      window.alert("Failed to save settings");
+     
+       toast.error("Failed to save settings");
     }
   };
 

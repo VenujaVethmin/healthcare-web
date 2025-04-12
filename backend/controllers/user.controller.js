@@ -6,16 +6,40 @@ export const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: "cm8okqt7o0000ibo0gakxj8cr",
+        id: req.user.id,
       },
       include: {
         userProfile: true,
-        prescriptions:{
-          take:1,
-          orderBy:{
-            createdAt:"desc"
-          }
-        }
+        prescriptions: {
+          take: 1,
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+    });
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+export const getProfilebyid = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.params.id,
+      },
+      include: {
+        userProfile: true,
+        prescriptions: {
+          take: 1,
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 
@@ -44,7 +68,7 @@ export const updateProfile = async (req, res) => {
     }
 
     // Get user ID from auth context (you should replace this with proper auth)
-    const userId = req.user?.id || "cm8okqt7o0000ibo0gakxj8cr"; // Ideally from auth middleware
+    const userId = req.user.id; // Ideally from auth middleware
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -274,7 +298,7 @@ export const bookAppointment = async (req, res) => {
     }
 
     // Use authenticated user's ID when available
-    const patientId = req.user?.id || "cm8okqt7o0000ibo0gakxj8cr";
+    const patientId = req.user?.id ;
 
     // Parse and validate date
     const dateObj = new Date(date);
@@ -413,7 +437,7 @@ export const calender = async (req, res) => {
   try {
     const today = await prisma.appointment.findMany({
       where: {
-        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        patientId: req.user.id,
         date: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
         },
@@ -441,7 +465,7 @@ export const getPrescription = async (req, res) => {
   try {
     const prescriptions = await prisma.prescription.findMany({
       where: {
-        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        patientId: req.user.id,
       },
       include: {
         doctor: {
@@ -471,7 +495,7 @@ export const dashboard = async (req, res) => {
     const nextAppointment = await prisma.appointment.findMany({
       take: 2,
       where: {
-        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        patientId: req.user.id,
         status: "Scheduled",
         date: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -491,7 +515,7 @@ export const dashboard = async (req, res) => {
 
     const prescription = await prisma.prescription.findFirst({
       where: {
-        patientId: "cm8okqt7o0000ibo0gakxj8cr",
+        patientId: req.user.id,
       },
       include: {
         doctor: {
@@ -499,11 +523,11 @@ export const dashboard = async (req, res) => {
             name: true,
           },
         },
-        appointment:{
-          select:{
-            pStatus:true,
-          }
-        }
+        appointment: {
+          select: {
+            pStatus: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -518,3 +542,22 @@ export const dashboard = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+export const medicalRecords = async (req,res)=>{
+  try {
+    const data = await prisma.medicalRecord.findMany({
+      where: {
+        userId: req.user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return res.status(200).json(
+      data
+    )
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}

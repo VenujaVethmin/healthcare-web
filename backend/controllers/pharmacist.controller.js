@@ -107,3 +107,28 @@ export const pStatusChange = async (req,res)=>{
     
   }
 }
+
+
+
+export const getUserInfo = async (req, res) => {
+
+  try {
+    const data = await prisma.user.findUnique({
+      where: {
+        email: req.params.email,
+      },
+
+      include:{
+        medicalRecords : true
+      }
+
+     
+    });
+
+    return res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    
+  }
+
+}

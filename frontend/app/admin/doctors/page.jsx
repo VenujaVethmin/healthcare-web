@@ -5,6 +5,7 @@ import { Search, UserPlus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import axiosInstance from "@/lib/axiosInstance";
 import useSWR from "swr";
+import { toast } from "sonner";
 
 const usersList = [
   {
@@ -54,12 +55,21 @@ export default function DoctorsManagement() {
     const res = await axiosInstance.post("/admin/changeRole", {
       userId: searchedUser.id,
     });
-    window.alert("User has been converted to doctor successfully");
-    console.log(res.data);
-    setUsers([...users, searchedUser]);
-    setSearchedUser(null);
-    setEmailSearch("");
-    setShowSearchResult(false);
+    if (res.status== 200) {
+       toast.success("User has been converted to doctor successfully", {
+         duration: 3000,
+         style: {
+           background: "#3a99b7",
+           color: "#fff",
+         },
+       });
+       console.log(res.data);
+       setUsers([...users, searchedUser]);
+       setSearchedUser(null);
+       setEmailSearch("");
+       setShowSearchResult(false);
+    }
+   
   };
 
   const handleDeleteDoctor = (doctorId) => {

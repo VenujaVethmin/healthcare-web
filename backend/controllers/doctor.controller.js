@@ -6,7 +6,7 @@ export const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: "cm8oelbxu0000ibrk1rfgovpu",
+        id: req.user.id,
       },
       include: {
         doctorProfile: true,
@@ -23,6 +23,31 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+export const getProfileById = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.params.id,
+      },
+      include: {
+        doctorProfile: true,
+        doctorBookingDetails: {
+          select: {
+            workingHours: true,
+          },
+        },
+      },
+    });
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 export const updateProfile = async (req, res) => {
   try {
     const {
@@ -35,7 +60,7 @@ export const updateProfile = async (req, res) => {
       education,
     } = req.body;
 
-    const userId = "cm8oelbxu0000ibrk1rfgovpu"; // Should come from req.user.id
+    const userId = req.user.id; // Should come from req.user.id
 
     const user = await prisma.user.update({
       where: {
@@ -196,7 +221,7 @@ export const dashboard = async (req, res) => {
 
     const appoinments = await prisma.appointment.findMany({
       where: {
-        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        doctorId: req.user.id,
         date: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
           lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
@@ -207,6 +232,7 @@ export const dashboard = async (req, res) => {
       include: {
         patient: {
           select: {
+            id: true,
             name: true,
             userProfile: true,
           },
@@ -230,7 +256,7 @@ export const calender = async (req, res) => {
   try {
     const today = await prisma.appointment.findMany({
       where: {
-        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        doctorId: req.user.id,
         date: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
         },
@@ -261,7 +287,7 @@ export const createPrescription = async (req, res) => {
     const newPrescription = await prisma.prescription.create({
       data: {
         appointmentId,
-        doctorId: "cm8oelbxu0000ibrk1rfgovpu",
+        doctorId: req.user.id,
         patientId,
         medicine, // JSON array of medicines
         notes,

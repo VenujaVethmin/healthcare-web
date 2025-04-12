@@ -249,7 +249,7 @@ export const dashboard = async (req, res) => {
 export const updatePublishStatus = async (req, res) => {
 
   try {
-    const res = await prisma.doctorBookingDetails.update({
+    const data = await prisma.doctorBookingDetails.update({
       where: {
         id: req.params.id,
       },
@@ -257,6 +257,7 @@ export const updatePublishStatus = async (req, res) => {
         isPublished: req.body.isPublished,
       },
     });
+    return res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
     

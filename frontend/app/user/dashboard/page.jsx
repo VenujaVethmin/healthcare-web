@@ -72,7 +72,7 @@ const PrescriptionStatusBadge = ({ status }) => {
       bg: "bg-gray-100",
       text: "text-gray-800",
       icon: <Pill className="w-4 h-4" />,
-      label: "Completed",
+      label: "Recived",
     },
   };
 

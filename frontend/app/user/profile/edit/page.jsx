@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import useSWR from "swr";
 
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
@@ -132,6 +133,7 @@ export default function EditProfilePage() {
         }
         await mutate();
         setIsFormDirty(false);
+        toast.success("Profile updated successfully");
         router.push("/user/profile");
       }
     } catch (error) {

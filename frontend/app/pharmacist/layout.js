@@ -1,6 +1,7 @@
 
 import Navbar from "@/components/DoctorComponents/navbar";
 import Sidebar from "@/components/PharmacistComponents/sidebar";
+import { Toaster } from "sonner";
 
 export default function RootLayout({ children }) {
   return (
@@ -15,6 +16,7 @@ export default function RootLayout({ children }) {
           {/* Navbar height offset */}
           <div className="max-w-7xl mx-auto pt-4 pb-20 ">{children}</div>
         </main>
+        <Toaster />
       </div>
     </div>
   );

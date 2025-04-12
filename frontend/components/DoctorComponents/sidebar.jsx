@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import {useRouter } from "next/navigation";
+import { logOut } from "@/hooks/auth-hooks";
 
 const menuItems = [
   {
@@ -34,6 +36,7 @@ const menuItems = [
 
 const SidebarContent = ({ isMobile = false }) => {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <div className="flex flex-col h-full">
@@ -120,7 +123,7 @@ const SidebarContent = ({ isMobile = false }) => {
             whileTap={{ scale: 0.98 }}
             className="flex w-full items-center gap-2 p-2 rounded-lg hover:bg-[#3a99b7]/5 transition-colors group"
           >
-            <LogOut className="w-[18px] h-[18px] text-[#7E7E7E] group-hover:text-[#3a99b7]" />
+            <LogOut onClick={() => logOut(router)} className="w-[18px] h-[18px] text-[#7E7E7E] group-hover:text-[#3a99b7]" />
             <span className="text-sm text-[#7E7E7E] group-hover:text-[#3a99b7]">
               Logout
             </span>

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, User, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
+import { toast } from "sonner";
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -30,6 +31,7 @@ const formatTime = (time) => {
 };
 
 export default function BookAppointment() {
+  const router = useRouter();
   const params = useParams();
   const [selectedDate, setSelectedDate] = useState(null);
   
@@ -123,10 +125,13 @@ export default function BookAppointment() {
         date: appointmentDate,
       });
 
-      alert("Appointment booked successfully!");
+      toast.success("Appointment booked successfully!");
+
+      
       setSelectedDate(null);
       setEstimatedTime(null);
       setBookingStep(1);
+      router.push("/user/dashboard"); // Redirect to appointments page
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Error booking appointment");
