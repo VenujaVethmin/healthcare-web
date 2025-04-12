@@ -3,18 +3,17 @@ import * as dotenv from "dotenv";
 import express from "express";
 import session from "express-session";
 
-import passport from "passport";
-import { ensureAuthenticated } from "./middleware/auth.js";
-import "./services/passport.js";
-import userRoute from "./routes/user.route.js";
-import doctorRoute from "./routes/doctor.route.js";
-import adminRoute from "./routes/admin.route.js";
-import testRoute from "./routes/test.route.js";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import e from "cors";
-import pharmacistRoute from "./routes/pharmacist.route.js";
+import passport from "passport";
+import { ensureAuthenticated } from "./middleware/auth.js";
+import adminRoute from "./routes/admin.route.js";
 import cloudinaryRoute from "./routes/cloudinary.route.js";
+import doctorRoute from "./routes/doctor.route.js";
+import pharmacistRoute from "./routes/pharmacist.route.js";
+import testRoute from "./routes/test.route.js";
+import userRoute from "./routes/user.route.js";
+import "./services/passport.js";
 
 const prisma = new PrismaClient();
 dotenv.config();
@@ -36,8 +35,8 @@ app.use(
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
       httpOnly: true, // Prevents XSS attacks
-      secure: false, // Set to true if using HTTPS
-      sameSite: "lax", // Prevents CSRF attacks
+      secure: true, // Set to true if using HTTPS
+      sameSite: "none", // Prevents CSRF attacks
     },
   })
 );
@@ -109,7 +108,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: false }),
   (req, res) => {
-    res.redirect("http://localhost:3000");
+    res.redirect(process.env.NEXT_PUBLIC_FRONTEND_URL);
   }
 );
 
