@@ -37,30 +37,28 @@ passport.use(
       clientID:
         "938098771234-bs3tih643rrer4upje3jmpm82ud2t67p.apps.googleusercontent.com",
       clientSecret: "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",
-      callbackURL: "http://localhost:3001/auth/google/callback", // Ensure this URI is registered on Google Developer Console
+      callbackURL:
+        "https://secure-leora-venuja-39acf74a.koyeb.app/auth/google/callback", // Ensure this URI is registered on Google Developer Console
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        
         const user = await prisma.user.findUnique({
-            where : {
-                email : profile.emails[0].value
-            }
-        })
+          where: {
+            email: profile.emails[0].value,
+          },
+        });
 
         if (user) {
           return done(null, user);
         }
 
         const newUser = await prisma.user.create({
-            data: {
-              
-                name: profile.displayName,
-                email: profile.emails[0].value,
-                image: profile.photos[0].value,
-            },
+          data: {
+            name: profile.displayName,
+            email: profile.emails[0].value,
+            image: profile.photos[0].value,
+          },
         });
-       
 
         done(null, newUser);
       } catch (error) {
