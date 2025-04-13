@@ -70,7 +70,10 @@ export default function LoginPage() {
       );
 
       if (response.status === 200) {
-        router.push("/redirect");
+        window.alert("Login successful");
+        const { token } = response.data;
+        localStorage.setItem("token", token);
+        // router.push("/redirect");
       }
     } catch (error) {
       

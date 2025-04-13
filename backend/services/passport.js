@@ -1,55 +1,57 @@
-import passport from 'passport'
-import LocalStrategy from 'passport-local'
-import GoogleStrategy from 'passport-google-oauth20'
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 
-import bcrypt from 'bcrypt'
-import { PrismaClient } from '@prisma/client';
+import bcrypt from "bcrypt";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET;
 
-passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
-    try {
-          const user = await prisma.user.findUnique({
-            where: {
-              email: email,
-            },
-          });
+// Local Strategy
+passport.use(
+  new LocalStrategy(
+    { usernameField: "email" },
+    async (email, password, done) => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
 
         if (!user) {
-            return done(null, false, { error: 'Incorrect email or password' })
+          return done(null, false, { message: "Incorrect email or password" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password)
-
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return done(null, false, { error: 'Incorrect email or password' })
+          return done(null, false, { message: "Incorrect email or password" });
         }
 
-        done(null, user)
-    } catch (error) {
-        done(error)
+        return done(null, user);
+      } catch (error) {
+        return done(error);
+      }
     }
-}))
+  )
+);
 
+// Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
-      clientID:
-        "938098771234-bs3tih643rrer4upje3jmpm82ud2t67p.apps.googleusercontent.com",
-      clientSecret: "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",
-      callbackURL:
-        "https://secure-leora-venuja-39acf74a.koyeb.app/auth/google/callback", // Ensure this URI is registered on Google Developer Console
+      clientID: process.env.GOOGLE_CLIENT_ID, // Move these to .env for security
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`, // example: https://your-api.com/auth/google/callback
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const user = await prisma.user.findUnique({
-          where: {
-            email: profile.emails[0].value,
-          },
+        const existingUser = await prisma.user.findUnique({
+          where: { email: profile.emails[0].value },
         });
 
-        if (user) {
-          return done(null, user);
+        if (existingUser) {
+          return done(null, existingUser);
         }
 
         const newUser = await prisma.user.create({
@@ -60,32 +62,35 @@ passport.use(
           },
         });
 
-        done(null, newUser);
+        return done(null, newUser);
       } catch (error) {
-        done(error);
+        return done(error);
       }
     }
   )
 );
 
-
-
-passport.serializeUser((user, done) => {
-    done(null, user.id)
-})
-
-passport.deserializeUser(async (userId, done) => {
-    try {
+// JWT Strategy
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: JWT_SECRET,
+    },
+    async (jwt_payload, done) => {
+      try {
         const user = await prisma.user.findUnique({
-            where: {
-                id: userId
-            }
+          where: { id: jwt_payload.id },
         });
-        if (!user) {
-            return done(new Error('User not found'));
+
+        if (user) {
+          return done(null, user);
+        } else {
+          return done(null, false);
         }
-        done(null, user);
-    } catch (error) {
-        done(error);
+      } catch (err) {
+        return done(err, false);
+      }
     }
-})
+  )
+);

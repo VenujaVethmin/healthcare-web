@@ -1,19 +1,19 @@
 import cors from "cors";
 import * as dotenv from "dotenv";
 import express from "express";
-import session from "express-session";
 
 import { PrismaClient } from "@prisma/client";
-import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import bcrypt from "bcrypt";
 import passport from "passport";
-import { ensureAuthenticated } from "./middleware/auth.js";
+import { ensureJWTAuth } from "./middleware/jwtAuth.js";
 import adminRoute from "./routes/admin.route.js";
 import cloudinaryRoute from "./routes/cloudinary.route.js";
 import doctorRoute from "./routes/doctor.route.js";
 import pharmacistRoute from "./routes/pharmacist.route.js";
 import testRoute from "./routes/test.route.js";
 import userRoute from "./routes/user.route.js";
+
+import jwt from "jsonwebtoken";
 
 import "./services/passport.js";
 
@@ -30,46 +30,24 @@ app.use(
   })
 );
 
-app.use(
-  session({
-    cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      sameSite: "none",
-      secure: true,
-    },
-    secret: "Qm2$A8z@W!r4V7&nLx3pZ0^dGe*T1#Kb",
-    resave: false,
-    saveUninitialized: false,
-    store: new PrismaSessionStore(prisma, {
-      checkPeriod: 2 * 60 * 1000, // every 2 mins clean expired sessions
-      dbRecordIdIsSessionId: true,
-      dbRecordIdFunction: undefined,
-    }),
-  })
-);
-
-// app.use(
-//   session({
-//     cookie: {
-//       maxAge: 30 * 24 * 60 * 60 * 1000,
-//       sameSite: "lax", // or "strict"
-//       secure: false,
-//     },
-//     secret: "Qm2$A8z@W!r4V7&nLx3pZ0^dGe*T1#Kb",
-//     resave: false,
-//     saveUninitialized: false,
-//     store: new PrismaSessionStore(prisma, {
-//       checkPeriod: 2 * 60 * 1000,
-//       dbRecordIdIsSessionId: true,
-//       dbRecordIdFunction: undefined,
-//     }),
-//   })
-// );
 
 
 
 app.use(passport.initialize());
-app.use(passport.session());
+
+
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+};
+
 
 app.post("/auth/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -105,26 +83,24 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-app.post("/auth/login", async (req, res) => {
-  passport.authenticate("local", (error, user, info) => {
-    if (error) {
-      return res.status(500).json({ error: "Something went wrong" });
-    }
+app.post("/auth/login", (req, res, next) => {
+  passport.authenticate("local", { session: false }, (error, user, info) => {
+    if (error) return res.status(500).json({ error: "Something went wrong" });
+    if (!user) return res.status(401).json({ error: info?.message });
 
-    if (!user) {
-      return res.status(401).json(info);
-    }
+    const token = generateToken(user);
 
-    req.login(user, (error) => {
-      if (error) {
-        return res.status(500).json({ error: "Something went wrong" });
-      }
-
-      return res
-        .status(200)
-        .json({ id: user._id, name: user.name, email: user.email });
+    res.status(200).json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      },
     });
-  })(req, res);
+  })(req, res, next);
 });
 
 app.get(
@@ -134,38 +110,48 @@ app.get(
 
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: false }),
+  passport.authenticate("google", { session: false, failureRedirect: "/" }),
   (req, res) => {
-    res.redirect(process.env.NEXT_PUBLIC_FRONTEND_URL);
+    const token = generateToken(req.user);
+    // Send token to frontend (or redirect with it)
+    res.redirect(
+      `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/success?token=${token}`
+    );
   }
 );
 
 app.get("/logout", (req, res) => {
-  req.logout((error) => {
-    if (error) {
-      return res.status(500).json({ error: "Something went wrong" });
-    }
-
-    res.status(204).send();
-  });
+  // Client should handle token deletion.
+  res
+    .status(200)
+    .json({ message: "Logged out on client side. Token deleted." });
 });
 
-app.get("/me", ensureAuthenticated, (req, res) => {
-  res.json({
-    id: req.user.id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-    image:req.user.image
-  });
+
+app.get("/me", ensureJWTAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      image: user.image,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
 });
 
-app.use("/api/user", userRoute);
-app.use("/api/doctor", doctorRoute);
-app.use("/api/admin", adminRoute);
-app.use("/api/test", testRoute);
-app.use("/api/pharmacist", pharmacistRoute);
-app.use("/api/cloudinary", cloudinaryRoute);
+app.use("/api/user",ensureJWTAuth, userRoute);
+app.use("/api/doctor", ensureJWTAuth,doctorRoute);
+app.use("/api/admin",ensureJWTAuth, adminRoute);
+app.use("/api/test",ensureJWTAuth, testRoute);
+app.use("/api/pharmacist",ensureJWTAuth, pharmacistRoute);
+app.use("/api/cloudinary",ensureJWTAuth, cloudinaryRoute);
 
 app.listen(3001, () => {
   console.log("Server started on port 3001");
