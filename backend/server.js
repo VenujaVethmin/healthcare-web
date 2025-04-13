@@ -4,6 +4,7 @@ import express from "express";
 import session from "express-session";
 
 import { PrismaClient } from "@prisma/client";
+import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import bcrypt from "bcrypt";
 import passport from "passport";
 import { ensureAuthenticated } from "./middleware/auth.js";
@@ -13,6 +14,7 @@ import doctorRoute from "./routes/doctor.route.js";
 import pharmacistRoute from "./routes/pharmacist.route.js";
 import testRoute from "./routes/test.route.js";
 import userRoute from "./routes/user.route.js";
+
 import "./services/passport.js";
 
 const prisma = new PrismaClient();
@@ -27,19 +29,45 @@ app.use(
     origin: process.env.NEXT_PUBLIC_FRONTEND_URL,
   })
 );
+
 app.use(
   session({
-    secret: "your_secret_key",
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: "none",
+      secure: true,
+    },
+    secret: "Qm2$A8z@W!r4V7&nLx3pZ0^dGe*T1#Kb",
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 1 day expiration
-      httpOnly: true, // Prevents XSS attacks
-      secure: true, // Set to true if using HTTPS
-      sameSite: "none", // Prevents CSRF attacks
-    },
+    store: new PrismaSessionStore(prisma, {
+      checkPeriod: 2 * 60 * 1000, // every 2 mins clean expired sessions
+      dbRecordIdIsSessionId: true,
+      dbRecordIdFunction: undefined,
+    }),
   })
 );
+
+// app.use(
+//   session({
+//     cookie: {
+//       maxAge: 30 * 24 * 60 * 60 * 1000,
+//       sameSite: "lax", // or "strict"
+//       secure: false,
+//     },
+//     secret: "Qm2$A8z@W!r4V7&nLx3pZ0^dGe*T1#Kb",
+//     resave: false,
+//     saveUninitialized: false,
+//     store: new PrismaSessionStore(prisma, {
+//       checkPeriod: 2 * 60 * 1000,
+//       dbRecordIdIsSessionId: true,
+//       dbRecordIdFunction: undefined,
+//     }),
+//   })
+// );
+
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 
