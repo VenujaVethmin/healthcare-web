@@ -448,7 +448,13 @@ export const calender = async (req, res) => {
         doctor: {
           select: {
             name: true,
+            doctorBookingDetails:{
+              select:{
+                room:true,
+              }
+            }
           },
+
         },
       },
     });

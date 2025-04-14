@@ -1,13 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Menu, X, User, ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import useSession from "@/hooks/session";
+import { useRouter } from "next/navigation";
+import { logOut } from "@/hooks/auth-hooks";
 
 export default function Hero() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { user, isLoading } = useSession();
 
   const features = [
     {
@@ -40,9 +46,21 @@ export default function Hero() {
     },
   ];
 
+  const profileMenuItems = [
+    {
+      label: "Dashboard",
+      href: "/user/dashboard",
+      icon: User,
+    },
+    {
+      label: "My Profile",
+      href: "/user/profile",
+      icon: User,
+    },
+  ];
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#eafefa] to-white">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50">
         <div className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,24 +85,104 @@ export default function Hero() {
                 <Link href="/about" className="nav-link">
                   About
                 </Link>
-
                 <Link href="/help-support" className="nav-link">
                   Help & Support
                 </Link>
-                <div className="flex items-center gap-4 ml-4">
-                  <Link
-                    href="/login"
-                    className="px-6 py-2.5 text-[#3a99b7] font-medium hover:text-[#2d7a93] transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/redirect"
-                    className="px-6 py-2.5 text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md hover:shadow-lg"
-                  >
-                    Get Started
-                  </Link>
-                </div>
+
+                {!isLoading && (
+                  <>
+                    {user ? (
+                      <div className="relative ml-4">
+                        <button
+                          onClick={() => setIsProfileOpen(!isProfileOpen)}
+                          className="flex items-center gap-3 pl-2 pr-3 py-2 rounded-full hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="relative w-9 h-9">
+                            <Image
+                              src={
+                                user?.image ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                  user?.name || "User"
+                                )}&background=3a99b7&color=fff&size=128`
+                              }
+                              alt="Profile"
+                              className="rounded-full object-cover"
+                              width={36}
+                              height={36}
+                            />
+                            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium text-[#232323]">
+                              {user?.name}
+                            </span>
+                            <span className="text-xs text-[#82889c]">
+                              {user?.role}
+                            </span>
+                          </div>
+                          <ChevronDown
+                            className={`w-4 h-4 text-[#82889c] transition-transform duration-200 ${
+                              isProfileOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        <AnimatePresence>
+                          {isProfileOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 8 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e2e2e2] overflow-hidden"
+                            >
+                              <div className="p-1.5">
+                                {profileMenuItems.map((item) => (
+                                  <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#434966] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                                    onClick={() => setIsProfileOpen(false)}
+                                  >
+                                    <item.icon className="w-4 h-4" />
+                                    {item.label}
+                                  </Link>
+                                ))}
+                              </div>
+                              <div className="p-1.5 border-t border-[#e2e2e2]">
+                                <button
+                                  onClick={() => {
+                                    setIsProfileOpen(false);
+                                    logOut(router);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#fa6161] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                                >
+                                  <LogOut className="w-4 h-4" />
+                                  Sign Out
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4 ml-4">
+                        <Link
+                          href="/login"
+                          className="px-6 py-2.5 text-[#3a99b7] font-medium hover:text-[#2d7a93] transition-colors"
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/redirect"
+                          className="px-6 py-2.5 text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md hover:shadow-lg"
+                        >
+                          Get Started
+                        </Link>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Mobile Menu Button */}
@@ -102,47 +200,101 @@ export default function Hero() {
           </div>
 
           {/* Mobile Menu */}
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="md:hidden bg-white border-t border-gray-100"
-            >
-              <div className="px-4 py-4 space-y-4">
-                <Link href="/about" className="mobile-nav-link">
-                  About
-                </Link>
-                <Link href="/services" className="mobile-nav-link">
-                  Services
-                </Link>
-                <Link href="/doctors" className="mobile-nav-link">
-                  Find Doctors
-                </Link>
-                <Link href="/support" className="mobile-nav-link">
-                  Help & Support
-                </Link>
-                <div className="pt-4 space-y-3">
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="md:hidden bg-white border-t border-gray-100"
+              >
+                <div className="px-4 py-4 space-y-4">
+                  {user && (
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Image
+                        src={
+                          user?.image ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            user?.name || "User"
+                          )}&background=3a99b7&color=fff&size=128`
+                        }
+                        alt="Profile"
+                        className="rounded-full"
+                        width={40}
+                        height={40}
+                      />
+                      <div>
+                        <p className="font-medium text-[#232323]">
+                          {user?.name}
+                        </p>
+                        <p className="text-sm text-[#82889c]">{user?.role}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <Link
-                    href="/login"
-                    className="block w-full px-4 py-3 text-center text-[#3a99b7] border-2 border-[#3a99b7] rounded-xl font-medium hover:bg-[#3a99b7] hover:text-white transition-colors"
+                    href="/about"
+                    className="block px-3 py-2 text-[#434966] hover:bg-[#f8f9fa] rounded-md transition-colors"
                   >
-                    Sign In
+                    About
                   </Link>
                   <Link
-                    href="/redirect"
-                    className="block w-full px-4 py-3 text-center text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md"
+                    href="/help-support"
+                    className="block px-3 py-2 text-[#434966] hover:bg-[#f8f9fa] rounded-md transition-colors"
                   >
-                    Get Started
+                    Help & Support
                   </Link>
+
+                  {user ? (
+                    <>
+                      {profileMenuItems.map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="flex items-center gap-2 px-3 py-2 text-[#434966] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          logOut(router);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[#fa6161] hover:bg-[#f8f9fa] rounded-md transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <div className="pt-4 space-y-3">
+                      <Link
+                        href="/login"
+                        className="block w-full px-4 py-3 text-center text-[#3a99b7] border-2 border-[#3a99b7] rounded-xl font-medium hover:bg-[#3a99b7] hover:text-white transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/redirect"
+                        className="block w-full px-4 py-3 text-center text-white bg-[#3a99b7] rounded-xl font-medium hover:bg-[#2d7a93] transition-colors shadow-md"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Get Started
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Hero Content */}
       <div className="pt-28">
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -181,10 +333,10 @@ export default function Hero() {
                 className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
                 <Link
-                  href="/redirect"
+                  href={user ? "/user/dashboard" : "/redirect"}
                   className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white bg-[#3a99b7] rounded-xl hover:bg-[#2d7a93] transition-colors duration-300 shadow-md hover:shadow-lg"
                 >
-                  Get Started
+                  {user ? "Go to Dashboard" : "Get Started"}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link

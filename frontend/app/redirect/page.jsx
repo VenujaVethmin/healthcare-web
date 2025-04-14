@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Activity, Loader2 } from "lucide-react";
+import axiosInstance from "@/lib/axiosInstance";
+import Cookies from "js-cookie";
 
 const LoadingDot = ({ delay }) => (
   <motion.div
@@ -26,21 +28,25 @@ export default function Redirect() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    
     const fetchUser = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/me`,
-          {
-            credentials: "include",
-          }
-        );
+        
+  const token = Cookies.get("token");
 
-        if (!response.ok) {
+   if (!token) {
+      router.push("/login");
+      return
+   }
+        const response = await axiosInstance.get("/me");
+
+        if (!response.status === 200) {
           router.push("/login");
           return;
         }
+        
 
-        const userData = await response.json();
+        const userData = await response.data;
         setUser(userData);
       } catch (error) {
         console.error("Failed to fetch user data:", error);

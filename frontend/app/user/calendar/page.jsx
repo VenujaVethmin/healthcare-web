@@ -26,7 +26,7 @@ export default function PatientAppointmentsPage() {
           id: appointment.id,
           doctorName: appointment.doctor.name,
           specialty: appointment.specialty || "General",
-          room: appointment.room || "TBD",
+          room: appointment?.doctor?.doctorBookingDetails.room || "TBD",
           time: formatAppointmentTime(appointment.time),
           date: appointment.date,
           status: appointment.status.toLowerCase(),

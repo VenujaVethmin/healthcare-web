@@ -120,15 +120,15 @@ app.get(
   }
 );
 
-app.get("/logout", (req, res) => {
-  // Client should handle token deletion.
-  res
-    .status(200)
-    .json({ message: "Logged out on client side. Token deleted." });
-});
+// app.get("/api/logout", (req, res) => {
+//   // Client should handle token deletion.
+//   res
+//     .status(200)
+//     .json({ message: "Logged out on client side. Token deleted." });
+// });
 
 
-app.get("/me", ensureJWTAuth, async (req, res) => {
+app.get("/api/me", ensureJWTAuth, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },

@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,14 +71,22 @@ export default function LoginPage() {
       );
 
       if (response.status === 200) {
-        window.alert("Login successful");
-        const { token } = response.data;
-        localStorage.setItem("token", token);
-        // router.push("/redirect");
+        const isLocalhost = window.location.hostname === "localhost";
+        // window.alert("Login successful");
+        Cookies.set("token", response.data.token, {
+          expires: 1, // expires in 1 day
+          secure: true,
+          sameSite: "Strict",
+          path: "/",
+        });
+        router.push("/redirect");
       }
     } catch (error) {
+
+      
       
       setError(error.response?.data?.message || "Failed to login check your credentials again ");
+
     } finally {
       setIsLoading(false);
     }

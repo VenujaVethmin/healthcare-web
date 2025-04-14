@@ -1,22 +1,16 @@
+import Cookies from "js-cookie";
+
 export const logOut = async (router) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Ensures the session cookie is sent
-    });
+    // Remove the token from cookies
+    Cookies.remove("token");
 
-    if (res.ok) {
-      // Redirect to login page after successful logout
-      router.push("/login");
-    } else {
-      console.error("Logout failed");
-    }
+    // Redirect to login
+    router.push("/login");
   } catch (error) {
     console.error("Error logging out:", error);
+    // Ensure the token is removed from cookies
+    Cookies.remove("token");
+    router.push("/login");
   }
 };
-
-
