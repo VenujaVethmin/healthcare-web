@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { startOfDay } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -435,11 +436,12 @@ export const bookAppointment = async (req, res) => {
 
 export const calender = async (req, res) => {
   try {
+    const todayUTC = startOfDay(new Date());
     const today = await prisma.appointment.findMany({
       where: {
         patientId: req.user.id,
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          gte: todayUTC,
         },
 
         status: "Scheduled",
@@ -448,13 +450,12 @@ export const calender = async (req, res) => {
         doctor: {
           select: {
             name: true,
-            doctorBookingDetails:{
-              select:{
-                room:true,
-              }
-            }
+            doctorBookingDetails: {
+              select: {
+                room: true,
+              },
+            },
           },
-
         },
       },
     });
@@ -498,24 +499,25 @@ export const getPrescription = async (req, res) => {
 
 export const dashboard = async (req, res) => {
   try {
+   const todayUTC = startOfDay(new Date());
     const nextAppointment = await prisma.appointment.findMany({
       take: 2,
       where: {
         patientId: req.user.id,
         status: "Scheduled",
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          gte: todayUTC,
         },
       },
       include: {
         doctor: {
           select: {
             name: true,
-            doctorBookingDetails:{
-              select:{
-                room:true,
-              }
-            }
+            doctorBookingDetails: {
+              select: {
+                room: true,
+              },
+            },
           },
         },
       },
