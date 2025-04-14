@@ -298,7 +298,7 @@ export const bookAppointment = async (req, res) => {
     }
 
     // Use authenticated user's ID when available
-    const patientId = "cm8okqt7o0000ibo0gakxj8cr"; ;
+    const patientId = req.user.id; ;
 
     // Parse and validate date
     const dateObj = new Date(date);

@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { getUserBooking } from "../controllers/test.controller.js";
+import { test } from "../controllers/test.controller.js";
 
 
 const testRoute = Router();
 
-testRoute.get("/test/:id", getUserBooking);
+testRoute.get("/test", test);
 
 
 export default testRoute;

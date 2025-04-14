@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import { toast } from "sonner";
+import axiosInstance from "@/lib/axiosInstance";
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -55,7 +56,7 @@ export default function BookAppointment() {
     const fetchDoctor = async () => {
       try {
         setLoading(true);
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/doctors/${params.id}/`);
+        const res = await axiosInstance.post(`/user/doctors/${params.id}`);
         console.log(res.data)
         setDoctorData(res.data.doctor);
       } catch (err) {
@@ -81,8 +82,8 @@ export default function BookAppointment() {
   const handleDateSelect = async (date) => {
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/doctors/${params.id}`,
+      const res = await axiosInstance.post(
+        `user/doctors/${params.id}`,
         {
           date: date.toISOString(),
         }
@@ -120,7 +121,7 @@ export default function BookAppointment() {
       // console.log("hi")
       // console.log(appointmentDate.toISOString());
 
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/bookAppoitnment`, {
+      const res = await axiosInstance.post(`/user/bookAppoitnment`, {
         doctorId: params.id,
         date: appointmentDate,
       });
