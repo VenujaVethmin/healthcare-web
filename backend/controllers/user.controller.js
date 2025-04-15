@@ -332,7 +332,6 @@ export const bookAppointment = async (req, res) => {
     ];
     const day = daysOfWeek[slDate.getDay()];
 
-    // Fetch doctor details with working hours
     const doctorDetails = await prisma.doctorBookingDetails.findUnique({
       where: { doctorId },
       select: {
@@ -340,6 +339,7 @@ export const bookAppointment = async (req, res) => {
           where: { day },
         },
         maxPatientsPerDay: true,
+        appointmentDuration: true,
       },
     });
 
@@ -352,15 +352,12 @@ export const bookAppointment = async (req, res) => {
         error: "Doctor is not available on this day",
       });
     }
-
-    // Check appointment capacity
     const maxPatients = parseInt(doctorDetails.maxPatientsPerDay, 10);
     if (!maxPatients || maxPatients <= 0) {
       return res.status(500).json({
         error: "Invalid maximum patients configuration",
       });
     }
-
     const appointmentCount = await prisma.appointment.count({
       where: {
         doctorId,
@@ -377,7 +374,6 @@ export const bookAppointment = async (req, res) => {
       });
     }
 
-    // Calculate appointment time
     const lastAppointment = await prisma.appointment.findFirst({
       where: {
         doctorId,
@@ -390,48 +386,29 @@ export const bookAppointment = async (req, res) => {
       orderBy: { time: "desc" },
     });
 
-    
-const workingHours = doctorDetails.workingHours[0];
-const [startHours, startMinutes] = workingHours.startTime
-  .split(":")
-  .map(Number);
+    const workingHours = doctorDetails.workingHours[0];
+    const [startHours, startMinutes] = workingHours.startTime
+      .split(":")
+      .map(Number);
 
     let appointmentTime;
+
     if (!lastAppointment) {
-      
       appointmentTime = new Date(slStartOfDay); // use SL day start
       appointmentTime.setHours(startHours, startMinutes, 0, 0);
     } else {
-      appointmentTime = new Date(
-        new Date(lastAppointment.time).getTime() + slOffsetMs
-      ); // convert to SL time
-      appointmentTime.setMinutes(appointmentTime.getMinutes() + 30);
+      appointmentTime = new Date(new Date(lastAppointment.time).getTime()); // convert to SL time
+      appointmentTime.setMinutes(
+        appointmentTime.getMinutes() + doctorDetails.appointmentDuration
+      );
     }
 
-    // Convert back to UTC for DB
-    const appointmentTimeUTC = new Date(appointmentTime.getTime() - slOffsetMs);
-
-    // Validate appointment time is within working hours
-    const [endHours, endMinutes] = workingHours.endTime
-      ? workingHours.endTime.split(":").map(Number)
-      : [23, 59];
-
-    const endTime = new Date(dateObj);
-    endTime.setHours(endHours, endMinutes, 0, 0);
-
-    if (appointmentTime > endTime) {
-      return res.status(400).json({
-        error: "Appointment time exceeds doctor's working hours",
-      });
-    }
-
-    // Create new appointment
     const newAppointment = await prisma.appointment.create({
       data: {
         doctorId,
         patientId,
-        date: new Date(appointmentTimeUTC.setHours(0, 0, 0, 0)),
-        time: appointmentTimeUTC,
+        date: dateObj,
+        time: appointmentTime,
       },
     });
 
