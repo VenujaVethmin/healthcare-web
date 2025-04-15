@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { startOfDay } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -299,13 +298,27 @@ export const bookAppointment = async (req, res) => {
     }
 
     // Use authenticated user's ID when available
-    const patientId = req.user.id; ;
+    const patientId = req.user.id;
 
     // Parse and validate date
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
-      return res.status(400).json({ error: "Invalid date format" });
-    }
+    const dateObj = new Date(date); // assume this is in ISO string format
+
+    // Offset for Sri Lanka (UTC+5:30)
+    const slOffsetMs = 5.5 * 60 * 60 * 1000;
+
+    // Convert to SL time
+    const slDate = new Date(dateObj.getTime() + slOffsetMs);
+
+    // Start and end of SL day in SL time
+    const slStartOfDay = new Date(slDate);
+    slStartOfDay.setHours(0, 0, 0, 0);
+
+    const slEndOfDay = new Date(slDate);
+    slEndOfDay.setHours(23, 59, 59, 999);
+
+    // Convert back to UTC for DB queries
+    const startOfDayUTC = new Date(slStartOfDay.getTime() - slOffsetMs);
+    const endOfDayUTC = new Date(slEndOfDay.getTime() - slOffsetMs);
 
     // Get day of week
     const daysOfWeek = [
@@ -317,7 +330,7 @@ export const bookAppointment = async (req, res) => {
       "FRIDAY",
       "SATURDAY",
     ];
-    const day = daysOfWeek[dateObj.getDay()];
+    const day = daysOfWeek[slDate.getDay()];
 
     // Fetch doctor details with working hours
     const doctorDetails = await prisma.doctorBookingDetails.findUnique({
@@ -352,8 +365,8 @@ export const bookAppointment = async (req, res) => {
       where: {
         doctorId,
         date: {
-          gte: new Date(dateObj.setHours(0, 0, 0, 0)),
-          lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+          gte: startOfDayUTC,
+          lte: endOfDayUTC,
         },
       },
     });
@@ -369,29 +382,34 @@ export const bookAppointment = async (req, res) => {
       where: {
         doctorId,
         date: {
-          gte: new Date(dateObj.setHours(0, 0, 0, 0)),
-          lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+          gte: startOfDayUTC,
+          lte: endOfDayUTC,
         },
       },
       select: { time: true },
       orderBy: { time: "desc" },
     });
 
-    const workingHours = doctorDetails.workingHours[0];
-    const [startHours, startMinutes] = workingHours.startTime
-      .split(":")
-      .map(Number);
+    
+const workingHours = doctorDetails.workingHours[0];
+const [startHours, startMinutes] = workingHours.startTime
+  .split(":")
+  .map(Number);
 
     let appointmentTime;
     if (!lastAppointment) {
-      // First appointment of the day
-      appointmentTime = new Date(dateObj);
+      
+      appointmentTime = new Date(slStartOfDay); // use SL day start
       appointmentTime.setHours(startHours, startMinutes, 0, 0);
     } else {
-      // Schedule after last appointment with 30-minute interval
-      appointmentTime = new Date(lastAppointment.time);
+      appointmentTime = new Date(
+        new Date(lastAppointment.time).getTime() + slOffsetMs
+      ); // convert to SL time
       appointmentTime.setMinutes(appointmentTime.getMinutes() + 30);
     }
+
+    // Convert back to UTC for DB
+    const appointmentTimeUTC = new Date(appointmentTime.getTime() - slOffsetMs);
 
     // Validate appointment time is within working hours
     const [endHours, endMinutes] = workingHours.endTime
@@ -412,8 +430,8 @@ export const bookAppointment = async (req, res) => {
       data: {
         doctorId,
         patientId,
-        date: dateObj,
-        time: appointmentTime,
+        date: new Date(appointmentTimeUTC.setHours(0, 0, 0, 0)),
+        time: appointmentTimeUTC,
       },
     });
 
@@ -436,12 +454,11 @@ export const bookAppointment = async (req, res) => {
 
 export const calender = async (req, res) => {
   try {
-    const todayUTC = startOfDay(new Date());
     const today = await prisma.appointment.findMany({
       where: {
         patientId: req.user.id,
         date: {
-          gte: todayUTC,
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
         },
 
         status: "Scheduled",
@@ -450,12 +467,13 @@ export const calender = async (req, res) => {
         doctor: {
           select: {
             name: true,
-            doctorBookingDetails: {
-              select: {
-                room: true,
-              },
-            },
+            doctorBookingDetails:{
+              select:{
+                room:true,
+              }
+            }
           },
+
         },
       },
     });
@@ -499,14 +517,27 @@ export const getPrescription = async (req, res) => {
 
 export const dashboard = async (req, res) => {
   try {
-   const todayUTC = startOfDay(new Date());
+    const now = new Date();
+
+    // Calculate the offset for Sri Lanka (UTC+5:30)
+    const slOffsetMs = 5.5 * 60 * 60 * 1000;
+
+    // Create a new date adjusted to SL time
+    const slNow = new Date(now.getTime() + slOffsetMs);
+
+    // Set SL time to start of the day
+    slNow.setHours(0, 0, 0, 0);
+
+    // Convert back to UTC so it matches what your DB expects
+    const slStartOfDayUTC = new Date(slNow.getTime() - slOffsetMs);
+
     const nextAppointment = await prisma.appointment.findMany({
       take: 2,
       where: {
         patientId: req.user.id,
         status: "Scheduled",
         date: {
-          gte: todayUTC,
+          gte: slStartOfDayUTC,
         },
       },
       include: {

@@ -5,20 +5,11 @@ export const test = async (req, res) => {
   try {
 
     const id = req.user.id;
-    const data = await prisma.appointment.findMany({
-      take: 2,
-      where: {
-        patientId: req.user.id,
-        
-        
-      },
-     
-      orderBy: {
-        date: "asc",
-      },
-    });
+    const now = new Date();
 
-    res.json({data , id});
+   
+
+    res.json({ now, id });
   } catch (error) {
     
     res.status(500).json({ error: error.message });
