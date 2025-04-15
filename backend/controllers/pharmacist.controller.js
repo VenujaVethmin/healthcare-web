@@ -5,12 +5,32 @@ const prisma = new PrismaClient();
 export const pharmacistDashboard = async (req, res) => {
   try {
 
+      const nowUTC = new Date(); // Current UTC time
+
+      // Sri Lanka is UTC+5:30 → add 5.5 hours to UTC to get SL time
+      const slNow = new Date(nowUTC.getTime() + 5.5 * 60 * 60 * 1000);
+
+      // Get Sri Lankan start & end of day in SL time
+      const slStart = new Date(slNow.setHours(0, 0, 0, 0));
+      const slEnd = new Date(slNow.setHours(23, 59, 59, 999));
+
+      // Move SL time to tomorrow
+      const slTomorrowStart = new Date(slStart);
+      slTomorrowStart.setDate(slTomorrowStart.getDate() + 1);
+      slTomorrowStart.setHours(0, 0, 0, 0);
+
+      // Convert those back to UTC
+      const startUTC = new Date(slStart.getTime() - 5.5 * 60 * 60 * 1000);
+      const endUTC = new Date(slEnd.getTime() - 5.5 * 60 * 60 * 1000);
+      const startOfTomorrowUTC = new Date(
+        slTomorrowStart.getTime() - 5.5 * 60 * 60 * 1000
+      );
+
     const totalPrescriptions = await prisma.appointment.count({
       where: {
-       
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: startUTC,
+          lte: endUTC,
         },
       },
     });
@@ -19,8 +39,8 @@ export const pharmacistDashboard = async (req, res) => {
       where: {
         pStatus: "PENDING",
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: startUTC,
+          lte: endUTC,
         },
       },
     });
@@ -30,8 +50,8 @@ export const pharmacistDashboard = async (req, res) => {
       where: {
         pStatus: "READY",
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: startUTC,
+          lte: endUTC,
         },
       },
     });
@@ -39,8 +59,8 @@ export const pharmacistDashboard = async (req, res) => {
         where: {
           pStatus: "COMPLETED",
           date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lte: new Date(new Date().setHours(23, 59, 59, 999)),
+            gte: startUTC,
+            lte: endUTC,
           },
         },
       });
@@ -52,8 +72,8 @@ export const pharmacistDashboard = async (req, res) => {
         },
         status: "COMPLETED",
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: startUTC,
+          lte: endUTC,
         },
       },
       select: {

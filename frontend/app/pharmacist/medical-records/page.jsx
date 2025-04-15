@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function PharmacistRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,6 +112,7 @@ export default function PharmacistRecords() {
         setRecords((prev) => [newRecord, ...prev]);
         setSelectedFile(null);
         setRecordName("");
+        toast.success("uploaded");
       } else {
         throw new Error("Invalid response from server");
       }

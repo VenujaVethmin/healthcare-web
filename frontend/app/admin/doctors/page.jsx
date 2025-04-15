@@ -72,10 +72,20 @@ export default function DoctorsManagement() {
    
   };
 
-  const handleDeleteDoctor = (doctorId) => {
-    if (window.confirm("Are you sure you want to remove this doctor?")) {
-      setUsers(users.filter((user) => user.id !== doctorId));
+  const handleDeleteDoctor =async (doctorId) => {
+    const res = await axiosInstance.delete(`/admin/deleteDoctor/${doctorId}`);
+ if (res.status== 200) {
+       toast.success("User has been converted to a Patient successfully", {
+         duration: 3000,
+         style: {
+           background: "#3a99b7",
+           color: "#fff",
+         },
+       });
+    
     }
+    
+    
   };
 
   return (

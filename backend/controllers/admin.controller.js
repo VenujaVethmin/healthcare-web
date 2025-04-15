@@ -187,6 +187,28 @@ export const updateDoctorSchedule = async (req, res) => {
 
 export const dashboard = async (req, res) => {
   try {
+
+      const nowUTC = new Date(); // Current UTC time
+
+      // Sri Lanka is UTC+5:30 → add 5.5 hours to UTC to get SL time
+      const slNow = new Date(nowUTC.getTime() + 5.5 * 60 * 60 * 1000);
+
+      // Get Sri Lankan start & end of day in SL time
+      const slStart = new Date(slNow.setHours(0, 0, 0, 0));
+      const slEnd = new Date(slNow.setHours(23, 59, 59, 999));
+
+      // Move SL time to tomorrow
+      const slTomorrowStart = new Date(slStart);
+      slTomorrowStart.setDate(slTomorrowStart.getDate() + 1);
+      slTomorrowStart.setHours(0, 0, 0, 0);
+
+      // Convert those back to UTC
+      const startUTC = new Date(slStart.getTime() - 5.5 * 60 * 60 * 1000);
+      const endUTC = new Date(slEnd.getTime() - 5.5 * 60 * 60 * 1000);
+      const startOfTomorrowUTC = new Date(
+        slTomorrowStart.getTime() - 5.5 * 60 * 60 * 1000
+      );
+
     const doctorCount = await prisma.user.count({
       where: {
         role: "DOCTOR",
@@ -202,8 +224,8 @@ export const dashboard = async (req, res) => {
     const todayAppointmentCount = await prisma.appointment.count({
       where: {
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
-          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+          gte: startUTC, // Start of today (00:00)
+          lte: endUTC, // End of today (23:59:59.999)
         },
       },
     });
@@ -218,17 +240,13 @@ export const dashboard = async (req, res) => {
                 doctorAppointments: {
                   where: {
                     date: {
-                      gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
-                      lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+                      gte: startUTC, // Start of today (00:00)
+                      lte: endUTC, // End of today (23:59:59.999)
                     },
-                    
                   },
-
                 },
               },
             },
-
-            
           },
         },
       },
@@ -263,3 +281,40 @@ export const updatePublishStatus = async (req, res) => {
     
   }
 }
+
+
+
+
+export const deleteDoctorData = async (req ,res) => {
+  try {
+
+    const { doctorId } = req.params; // Get doctorId from request parameters
+    // 1. Find DoctorBookingDetails ID
+    const bookingDetails = await prisma.doctorBookingDetails.findUnique({
+      where: { doctorId },
+    });
+
+    // 2. Delete WorkingHours if DoctorBookingDetails exists
+    if (bookingDetails) {
+      await prisma.workingHour.deleteMany({
+        where: { doctorBookingDetailsId: bookingDetails.id },
+      });
+
+      // 3. Delete DoctorBookingDetails
+      await prisma.doctorBookingDetails.delete({
+        where: { doctorId },
+      });
+    }
+
+    // 4. Delete DoctorProfile
+    await prisma.doctorProfile.delete({
+      where: { userId: doctorId },
+    });
+
+    return res.status(200).json({ message: "Doctor profile and booking details deleted successfully." }); 
+
+    console.log("Doctor profile and booking details deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting doctor data:", error);
+  }
+};

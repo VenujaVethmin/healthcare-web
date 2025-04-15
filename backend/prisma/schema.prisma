@@ -15,7 +15,7 @@ model User {
   name                 String?
   email                String                @unique
   password             String?
-  image                String?
+  image                String?               @default("https://ui-avatars.com/api/?name=User&background=3a99b7&color=fff&size=128")
   role                 Role                  @default(PATIENT)
   userProfile          UserProfile?
   doctorProfile        DoctorProfile?

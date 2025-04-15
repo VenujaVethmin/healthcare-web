@@ -5,12 +5,19 @@ import { format, isAfter, isToday, isTomorrow, parseISO } from "date-fns";
 import { Building, Calendar, Clock, Stethoscope } from "lucide-react";
 import useSWR from "swr";
 
+import { formatInTimeZone } from 'date-fns-tz';
+
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 const formatAppointmentTime = (timeString) => {
   const time = new Date(timeString);
   return format(time, "h:mm a");
 };
+
+function getUtcTimeOnly(isoTime) {
+  return formatInTimeZone(parseISO(isoTime), 'UTC', 'h:mm a');
+}
+
 
 export default function PatientAppointmentsPage() {
   const { data, error, isLoading } = useSWR("/user/calender", fetcher);
@@ -27,7 +34,7 @@ export default function PatientAppointmentsPage() {
           doctorName: appointment.doctor.name,
           specialty: appointment.specialty || "General",
           room: appointment?.doctor?.doctorBookingDetails.room || "TBD",
-          time: formatAppointmentTime(appointment.time),
+          time: getUtcTimeOnly(appointment.time),
           date: appointment.date,
           status: appointment.status.toLowerCase(),
           contact: appointment.contact || "Not provided",

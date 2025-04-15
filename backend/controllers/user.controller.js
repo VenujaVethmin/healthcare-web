@@ -431,11 +431,17 @@ export const bookAppointment = async (req, res) => {
 
 export const calender = async (req, res) => {
   try {
+    const nowUTC = new Date();
+    const sriLankaOffsetInMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+
+    // Set the time to midnight in SLT
+    const slMidnight = new Date(nowUTC.getTime() + sriLankaOffsetInMs);
+    slMidnight.setHours(0, 0, 0, 0);
     const today = await prisma.appointment.findMany({
       where: {
         patientId: req.user.id,
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          gte: slMidnight,
         },
 
         status: "Scheduled",
@@ -444,13 +450,12 @@ export const calender = async (req, res) => {
         doctor: {
           select: {
             name: true,
-            doctorBookingDetails:{
-              select:{
-                room:true,
-              }
-            }
+            doctorBookingDetails: {
+              select: {
+                room: true,
+              },
+            },
           },
-
         },
       },
     });
@@ -494,19 +499,12 @@ export const getPrescription = async (req, res) => {
 
 export const dashboard = async (req, res) => {
   try {
-    const now = new Date();
+      const nowUTC = new Date();
+      const sriLankaOffsetInMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
 
-    // Calculate the offset for Sri Lanka (UTC+5:30)
-    const slOffsetMs = 5.5 * 60 * 60 * 1000;
-
-    // Create a new date adjusted to SL time
-    const slNow = new Date(now.getTime() + slOffsetMs);
-
-    // Set SL time to start of the day
-    slNow.setHours(0, 0, 0, 0);
-
-    // Convert back to UTC so it matches what your DB expects
-    const slStartOfDayUTC = new Date(slNow.getTime() - slOffsetMs);
+      // Set the time to midnight in SLT
+      const slMidnight = new Date(nowUTC.getTime() + sriLankaOffsetInMs);
+      slMidnight.setHours(0, 0, 0, 0);
 
     const nextAppointment = await prisma.appointment.findMany({
       take: 2,
@@ -514,7 +512,7 @@ export const dashboard = async (req, res) => {
         patientId: req.user.id,
         status: "Scheduled",
         date: {
-          gte: slStartOfDayUTC,
+          gte: slMidnight,
         },
       },
       include: {

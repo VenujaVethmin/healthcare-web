@@ -100,8 +100,6 @@ function getUtcTimeOnly(isoTime) {
   return formatInTimeZone(parseISO(isoTime), 'UTC', 'h:mm a');
 }
 
-console.log(getUtcTimeOnly("2025-04-16T09:00:00.000Z")); // 👉 "9:00 AM"
-
 
 
 

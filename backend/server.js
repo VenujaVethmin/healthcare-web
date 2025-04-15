@@ -114,8 +114,15 @@ app.get(
   (req, res) => {
     const token = generateToken(req.user);
     // Send token to frontend (or redirect with it)
+     res.cookie("token", token, {
+       httpOnly: false,
+       secure: false, // only secure in production http true on production
+       sameSite: "Lax", // Lax is better for dev
+       maxAge: 24 * 60 * 60 * 1000,
+     });
+
     res.redirect(
-      `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/success?token=${token}`
+      `${process.env.NEXT_PUBLIC_FRONTEND_URL}/redirect`
     );
   }
 );

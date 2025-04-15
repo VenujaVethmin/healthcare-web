@@ -189,12 +189,33 @@ export const updateAppointment = async (req, res) => {
 
 export const dashboard = async (req, res) => {
   try {
+    const nowUTC = new Date(); // Current UTC time
+
+    // Sri Lanka is UTC+5:30 → add 5.5 hours to UTC to get SL time
+    const slNow = new Date(nowUTC.getTime() + 5.5 * 60 * 60 * 1000);
+
+    // Get Sri Lankan start & end of day in SL time
+    const slStart = new Date(slNow.setHours(0, 0, 0, 0));
+    const slEnd = new Date(slNow.setHours(23, 59, 59, 999));
+
+    // Move SL time to tomorrow
+    const slTomorrowStart = new Date(slStart);
+    slTomorrowStart.setDate(slTomorrowStart.getDate() + 1);
+    slTomorrowStart.setHours(0, 0, 0, 0);
+
+    // Convert those back to UTC
+    const startUTC = new Date(slStart.getTime() - 5.5 * 60 * 60 * 1000);
+    const endUTC = new Date(slEnd.getTime() - 5.5 * 60 * 60 * 1000);
+    const startOfTomorrowUTC = new Date(
+      slTomorrowStart.getTime() - 5.5 * 60 * 60 * 1000
+    );
+
     // Count appointments for today
     const todayCount = await prisma.appointment.count({
       where: {
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
-          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+          gte: startUTC, // Start of today (00:00)
+          lte: endUTC, // End of today (23:59:59.999)
         },
         status: "Scheduled",
       },
@@ -204,16 +225,16 @@ export const dashboard = async (req, res) => {
     const upcomingCount = await prisma.appointment.count({
       where: {
         date: {
-          gte: new Date(new Date().setHours(23, 59, 59, 999)), // Start of tomorrow (after today)
+          gte: startOfTomorrowUTC, // Start of tomorrow (after today)
         },
       },
     });
 
     const completedCount = await prisma.appointment.count({
       where: {
-        date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
-          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+        date: { 
+          gte: startUTC, // Start of today (00:00)
+          lte: endUTC, // End of today (23:59:59.999)
         },
         status: "COMPLETED",
       },
@@ -223,8 +244,8 @@ export const dashboard = async (req, res) => {
       where: {
         doctorId: req.user.id,
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Start of today (00:00)
-          lte: new Date(new Date().setHours(23, 59, 59, 999)), // End of today (23:59:59.999)
+          gte: startUTC, // Start of today (00:00)
+          lte: endUTC, // End of today (23:59:59.999)
         },
         status: "Scheduled",
       },
@@ -234,6 +255,7 @@ export const dashboard = async (req, res) => {
           select: {
             id: true,
             name: true,
+            image: true,
             userProfile: true,
           },
         },
@@ -243,7 +265,7 @@ export const dashboard = async (req, res) => {
     // Return the result as JSON
     res.json({
       todayCount,
-      upcomingCount: upcomingCount - todayCount,
+      upcomingCount: upcomingCount,
       appoinments,
       completedCount,
     });
@@ -254,11 +276,32 @@ export const dashboard = async (req, res) => {
 
 export const calender = async (req, res) => {
   try {
+       const nowUTC = new Date(); // Current UTC time
+
+    // Sri Lanka is UTC+5:30 → add 5.5 hours to UTC to get SL time
+    const slNow = new Date(nowUTC.getTime() + 5.5 * 60 * 60 * 1000);
+
+    // Get Sri Lankan start & end of day in SL time
+    const slStart = new Date(slNow.setHours(0, 0, 0, 0));
+    const slEnd = new Date(slNow.setHours(23, 59, 59, 999));
+
+    // Move SL time to tomorrow
+    const slTomorrowStart = new Date(slStart);
+    slTomorrowStart.setDate(slTomorrowStart.getDate() + 1);
+    slTomorrowStart.setHours(0, 0, 0, 0);
+
+    // Convert those back to UTC
+    const startUTC = new Date(slStart.getTime() - 5.5 * 60 * 60 * 1000);
+    const endUTC = new Date(slEnd.getTime() - 5.5 * 60 * 60 * 1000);
+    const startOfTomorrowUTC = new Date(
+      slTomorrowStart.getTime() - 5.5 * 60 * 60 * 1000
+    );
+
     const today = await prisma.appointment.findMany({
       where: {
         doctorId: req.user.id,
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          gte: startUTC,
         },
 
         status: "Scheduled",
@@ -269,6 +312,15 @@ export const calender = async (req, res) => {
             name: true,
           },
         },
+        doctor:{
+          select:{
+            doctorBookingDetails:{
+              select:{
+                room: true,
+              }
+            }
+          }
+        }
       },
     });
 

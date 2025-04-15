@@ -20,7 +20,7 @@ export default function Hero() {
       number: "24/7",
       label: "Medical Support",
       image:
-        "https://images.unsplash.com/photo-1587556590582-927ced50c126?q=80&w=500&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1628348070889-cb656235b4eb?q=80&w=2940",
       description: "Round-the-clock medical assistance at your fingertips",
     },
     {

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Clock, Package2, Pill as Pills } from "lucide-react";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
+import { toast } from "sonner";
 
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
@@ -44,7 +45,8 @@ export default function PharmacistDashboard() {
       );
 
       if (res.status === 200) {
-        window.alert("Status updated successfully");
+       
+        toast.success("Status updated successfully");
         setPrescriptions(
           prescriptions.map((prescription) =>
             prescription.prescriptions.id === prescriptionId
@@ -55,7 +57,8 @@ export default function PharmacistDashboard() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      window.alert("Failed to update status");
+      toast.error("Failed to update  status");
+      
     }
   };
 

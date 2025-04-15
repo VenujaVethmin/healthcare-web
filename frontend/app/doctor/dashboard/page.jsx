@@ -14,7 +14,9 @@ import {
 import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
+
 import { format, parseISO } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
 import { toast } from "sonner";
 const dosageOptions = [
   "50mg",
@@ -36,6 +38,8 @@ const frequencyOptions = [
   "As needed",
 ];
 
+
+
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 // Helper function to format time to Sri Lanka time
@@ -53,6 +57,10 @@ const formatSriLankaTime = (dateString) => {
     return "Invalid time";
   }
 };
+
+function getUtcTimeOnly(isoTime) {
+  return formatInTimeZone(parseISO(isoTime), 'UTC', 'h:mm a');
+}
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -78,7 +86,7 @@ export default function DoctorDashboard() {
 
   const handleViewProfile = async (patientId) => {
     try {
-      router.push(`/doctor/patients/${patientId}`);
+      router.push(`/doctor/dashboard/profile/${patientId}`);
     } catch (error) {
       console.error("Error navigating to patient profile:", error);
       alert("Failed to view patient profile");
@@ -296,7 +304,7 @@ const handleSubmitPrescription = async (appointment) => {
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="w-4 h-4 text-[#82889c]" />
                         <span className="text-sm text-[#82889c]">
-                          {formatSriLankaTime(appointment.time)}
+                          {getUtcTimeOnly(appointment.time)}
                         </span>
                       </div>
                     </div>
