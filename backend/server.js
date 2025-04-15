@@ -113,17 +113,8 @@ app.get(
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
   (req, res) => {
     const token = generateToken(req.user);
-    // Send token to frontend (or redirect with it)
-     res.cookie("token", token, {
-       httpOnly: true,
-       secure: true, // only secure in production http true on production
-       sameSite: "none", // Lax is better for dev
-       maxAge: 24 * 60 * 60 * 1000,
-     });
-
-    res.redirect(
-      `${process.env.NEXT_PUBLIC_FRONTEND_URL}/redirect`
-    );
+   
+      res.redirect(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/token?token=${token}`);
   }
 );
 
