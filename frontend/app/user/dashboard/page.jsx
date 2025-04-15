@@ -21,9 +21,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
-import { format } from "date-fns";
+
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { format, parseISO } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
 
 // Fetcher for API calls
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
@@ -94,17 +96,14 @@ const specializedServices = [
   },
 ];
 
-// Time conversion utilities
-const convertToSLTime = (utcDate) => {
-  if (!utcDate) return "Not scheduled";
-  const date = new Date(utcDate);
-  return date.toLocaleString("en-US", {
-    timeZone: "Asia/Colombo",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  });
-};
+function getUtcTimeOnly(isoTime) {
+  return formatInTimeZone(parseISO(isoTime), 'UTC', 'h:mm a');
+}
+
+console.log(getUtcTimeOnly("2025-04-16T09:00:00.000Z")); // 👉 "9:00 AM"
+
+
+
 
 const getSLTimeDate = (utcDate) => {
   if (!utcDate) return null;
@@ -175,7 +174,7 @@ const AppointmentCard = ({ appointment, countdown }) => (
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 text-[#82889c]" />
         <span className="text-sm text-[#232323]">
-          {convertToSLTime(appointment.time)}
+          {getUtcTimeOnly(appointment.time)}
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -364,11 +363,15 @@ export default function DashboardPage() {
     const timer = setInterval(() => {
       const newCountdowns = {};
       const nowUTC = new Date();
-      const now = new Date(nowUTC.getTime() + 5.5 * 60 * 60 * 1000);
+      const sriLankaOffsetInMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      const now = new Date(nowUTC.getTime() + sriLankaOffsetInMs);
+
 
       data.nextAppointment.forEach((appointment) => {
-        const appointmentTime = getSLTimeDate(appointment.time);
-        if (!appointmentTime) {
+        // Parse the appointment time directly as Sri Lankan time
+        const appointmentTime = parseISO(appointment.time); // Assuming appointment.time is like "2025-04-16 09:00:00"
+
+        if (!appointmentTime || isNaN(appointmentTime)) {
           newCountdowns[appointment.id] = "Not scheduled";
           return;
         }
