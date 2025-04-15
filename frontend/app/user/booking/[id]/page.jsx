@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, User, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
 import Image from "next/image";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axiosInstance";
@@ -35,32 +34,29 @@ export default function BookAppointment() {
   const router = useRouter();
   const params = useParams();
   const [selectedDate, setSelectedDate] = useState(null);
-  
   const [doctorData, setDoctorData] = useState(null);
   const [estimatedTime, setEstimatedTime] = useState(null);
-  console.log("es time "+estimatedTime);
   const [bookingStep, setBookingStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Generate next 7 available days
+  // Generate next 7 available days starting from tomorrow
   const availableDates = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() + i);
+    date.setDate(date.getDate() + i + 1); // Start from tomorrow
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
-  // Fetch initial doctor data
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
         setLoading(true);
         const res = await axiosInstance.post(`/user/doctors/${params.id}`);
-        console.log(res.data)
         setDoctorData(res.data.doctor);
       } catch (err) {
         setError(err.response?.data?.error || "Error fetching doctor details");
+        toast.error("Failed to fetch doctor details");
       } finally {
         setLoading(false);
       }
@@ -78,21 +74,12 @@ export default function BookAppointment() {
     }
   };
 
-  // Update the handleDateSelect function
   const handleDateSelect = async (date) => {
     try {
       setLoading(true);
-      const res = await axiosInstance.post(
-        `user/doctors/${params.id}`,
-        {
-          date: date.toISOString(),
-        }
-      );
-
-     
-
-
-
+      const res = await axiosInstance.post(`user/doctors/${params.id}`, {
+        date: date.toISOString(),
+      });
 
       setSelectedDate(date);
       setDoctorData(res.data.doctor);
@@ -100,42 +87,32 @@ export default function BookAppointment() {
       setBookingStep(2);
     } catch (err) {
       setError(err.response?.data?.error || "Error checking date availability");
+      toast.error("Failed to check date availability");
     } finally {
       setLoading(false);
     }
   };
 
-  // Update the handleBookAppointment function
   const handleBookAppointment = async () => {
     if (!selectedDate) {
-      setError("Please select a date");
+      toast.error("Please select a date");
       return;
     }
 
     try {
       setLoading(true);
       const appointmentDate = new Date(selectedDate);
-     console.log(appointmentDate.toISOString())
-     
 
-      // console.log("hi")
-      // console.log(appointmentDate.toISOString());
-
-      const res = await axiosInstance.post(`/user/bookAppoitnment`, {
+      await axiosInstance.post(`/user/bookAppoitnment`, {
         doctorId: params.id,
         date: appointmentDate,
       });
 
       toast.success("Appointment booked successfully!");
-
-      
-      setSelectedDate(null);
-      setEstimatedTime(null);
-      setBookingStep(1);
-      router.push("/user/dashboard"); // Redirect to appointments page
+      router.push("/user/dashboard");
     } catch (err) {
-      console.error(err); 
-      setError(err.response?.data?.error || "Error booking appointment");
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to book appointment");
     } finally {
       setLoading(false);
     }
@@ -151,8 +128,8 @@ export default function BookAppointment() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
       </div>
@@ -171,20 +148,21 @@ export default function BookAppointment() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Doctor Info Header */}
-      <div className="bg-white rounded-xl border border-black/10 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-4">
-            <Image
-              src={doctorData.doctor.image}
-              alt={doctorData.doctor.name}
-              width={64} // 16 * 4 for high resolution
-              height={64}
-              className="w-16 h-16 rounded-full object-cover"
-            />
+      <div className="bg-white rounded-xl border border-black/10 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:justify-between">
+          <div className="flex gap-4 items-start">
+            <div className="relative w-16 h-16 flex-shrink-0">
+              <Image
+                src={doctorData.doctor.image}
+                alt={doctorData.doctor.name}
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
             <div>
-              <h1 className="text-2xl font-semibold text-[#232323]">
+              <h1 className="text-xl sm:text-2xl font-semibold text-[#232323]">
                 Book Appointment with Dr.{doctorData.doctor.name}
               </h1>
               <p className="text-[#82889c]">
@@ -192,8 +170,8 @@ export default function BookAppointment() {
               </p>
             </div>
           </div>
-          <div className="bg-[#3a99b7]/10 px-6 py-3 rounded-xl text-center">
-            <p className="text-[#3a99b7] font-semibold text-2xl">
+          <div className="w-full sm:w-auto bg-[#3a99b7]/10 px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-center">
+            <p className="text-[#3a99b7] font-semibold text-xl sm:text-2xl">
               LKR {doctorData.consultationFee.toLocaleString()}
             </p>
             <p className="text-sm text-[#82889c]">Consultation Fee</p>
@@ -203,30 +181,32 @@ export default function BookAppointment() {
 
       {/* Current Selection Summary */}
       {selectedDate && (
-        <div className="bg-[#f8f9fa] rounded-lg p-4 flex items-center gap-4">
-          {bookingStep > 1 && (
-            <button
-              onClick={handleBack}
-              className="p-2 hover:bg-white rounded-full transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-[#82889c]" />
-            </button>
-          )}
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#3a99b7]" />
-              <span className="text-sm font-medium">
-                {formatDate(selectedDate)}
-              </span>
-            </div>
-            {estimatedTime && (
+        <div className="bg-[#f8f9fa] rounded-lg p-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            {bookingStep > 1 && (
+              <button
+                onClick={handleBack}
+                className="p-2 hover:bg-white rounded-full transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-[#82889c]" />
+              </button>
+            )}
+            <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#3a99b7]" />
+                <Calendar className="w-4 h-4 text-[#3a99b7]" />
                 <span className="text-sm font-medium">
-                  Around {formatTime(estimatedTime)}
+                  {formatDate(selectedDate)}
                 </span>
               </div>
-            )}
+              {estimatedTime && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#3a99b7]" />
+                  <span className="text-sm font-medium">
+                    Around {formatTime(estimatedTime)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -239,7 +219,7 @@ export default function BookAppointment() {
             className={`flex items-center ${index < 2 ? "flex-1" : ""}`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                 bookingStep > index
                   ? "bg-[#3a99b7] text-white"
                   : bookingStep === index + 1
@@ -247,11 +227,11 @@ export default function BookAppointment() {
                   : "bg-gray-200 text-gray-500"
               }`}
             >
-              {index + 1}
+              <span className="text-xs sm:text-sm">{index + 1}</span>
             </div>
             {index < 2 && (
               <div
-                className={`flex-1 h-1 mx-2 ${
+                className={`flex-1 h-1 mx-1 sm:mx-2 ${
                   bookingStep > index + 1 ? "bg-[#3a99b7]" : "bg-gray-200"
                 }`}
               />
@@ -265,12 +245,11 @@ export default function BookAppointment() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-black/10 p-6"
+          className="bg-white rounded-xl border border-black/10 p-4 sm:p-6"
         >
           <h2 className="text-lg font-medium mb-4">Select Date</h2>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
             {availableDates.map((date) => {
-              const isToday = new Date().toDateString() === date.toDateString();
               const isAvailable = isDateAvailable(date);
 
               return (
@@ -279,24 +258,20 @@ export default function BookAppointment() {
                   onClick={() => isAvailable && handleDateSelect(date)}
                   disabled={!isAvailable || loading}
                   className={`
-                    p-4 rounded-lg text-center relative
+                    p-3 sm:p-4 rounded-lg text-center relative
                     ${
                       isAvailable && !loading
                         ? "hover:bg-gray-50 cursor-pointer"
                         : "opacity-50 cursor-not-allowed bg-gray-50"
                     }
-                    ${isToday ? "ring-2 ring-[#3a99b7] ring-opacity-50" : ""}
                   `}
                 >
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {date.toLocaleDateString("en-US", { weekday: "short" })}
                   </p>
-                  <p className="text-lg font-medium">{date.getDate()}</p>
-                  {isToday && (
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-[#3a99b7]">
-                      Today
-                    </span>
-                  )}
+                  <p className="text-base sm:text-lg font-medium">
+                    {date.getDate()}
+                  </p>
                 </button>
               );
             })}
@@ -309,7 +284,7 @@ export default function BookAppointment() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-black/10 p-6"
+          className="bg-white rounded-xl border border-black/10 p-4 sm:p-6"
         >
           <h2 className="text-lg font-medium mb-4">
             Review Appointment Details
@@ -333,7 +308,7 @@ export default function BookAppointment() {
             )}
 
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-gray-600 mb-2">Consultation Details:</p>
+              <p className="text-gray-600 mb-2">Consultation Fee:</p>
               <p className="font-medium text-xl text-[#3a99b7]">
                 LKR {doctorData.consultationFee.toLocaleString()}
               </p>
@@ -355,7 +330,7 @@ export default function BookAppointment() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-black/10 p-6"
+          className="bg-white rounded-xl border border-black/10 p-4 sm:p-6"
         >
           <h2 className="text-lg font-medium mb-4">Confirm Appointment</h2>
           <div className="space-y-4">
@@ -363,7 +338,7 @@ export default function BookAppointment() {
               <User className="w-5 h-5 text-[#82889c]" />
               <div>
                 <p className="font-medium text-[#232323]">
-                  {doctorData.doctor.name}
+                  Dr. {doctorData.doctor.name}
                 </p>
                 <p className="text-sm text-[#82889c]">
                   {doctorData.specialty || "Doctor"}
@@ -408,5 +383,5 @@ export default function BookAppointment() {
         </motion.div>
       )}
     </div>
-  );  
+  );
 }

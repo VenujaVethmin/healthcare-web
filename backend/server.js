@@ -115,9 +115,9 @@ app.get(
     const token = generateToken(req.user);
     // Send token to frontend (or redirect with it)
      res.cookie("token", token, {
-       httpOnly: false,
-       secure: false, // only secure in production http true on production
-       sameSite: "Lax", // Lax is better for dev
+       httpOnly: true,
+       secure: trye, // only secure in production http true on production
+       sameSite: "none", // Lax is better for dev
        maxAge: 24 * 60 * 60 * 1000,
      });
 
