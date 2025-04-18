@@ -147,7 +147,7 @@ app.get("/api/me", ensureJWTAuth, async (req, res) => {
 app.use("/api/user",ensureJWTAuth, userRoute);
 app.use("/api/doctor", ensureJWTAuth,doctorRoute);
 app.use("/api/admin",ensureJWTAuth, adminRoute);
-app.use("/api/test",ensureJWTAuth, testRoute);
+app.use("/api/test", testRoute);
 app.use("/api/pharmacist",ensureJWTAuth, pharmacistRoute);
 app.use("/api/cloudinary",ensureJWTAuth, cloudinaryRoute);
 

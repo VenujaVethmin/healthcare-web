@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { sendEmail } from "../lib/sendEmail.js";
 
 const prisma = new PrismaClient();
 
@@ -103,7 +104,7 @@ export const pharmacistDashboard = async (req, res) => {
 
 export const pStatusChange = async (req,res)=>{
   try {
-    const { id } = req.params; 
+    const { id } = req.params;
     const { pStatus } = req.body;
 
     const updatedPrescription = await prisma.prescription.update({
@@ -118,10 +119,66 @@ export const pStatusChange = async (req,res)=>{
           },
         },
       },
+
+      select: {
+        appointment: {
+          select: {
+            pStatus: true,
+          },
+        },
+        patient: {
+          select: {
+            email: true,
+          },
+        },
+      },
     });
 
-    return res.status(200).json(updatedPrescription);
+ 
+
+    if (updatedPrescription.appointment.pStatus === "READY") {
+      const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #3a99b7; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Prescription Ready</h1>
+      </div>
+      <div style="padding: 20px; border: 1px solid #eee;">
+        <p style="font-size: 16px; color: #333;">Dear Patient,</p>
+        <p style="font-size: 16px; line-height: 1.5; color: #444;">
+          Your prescription is ready for pickup at our pharmacy. Please visit us during our operating hours to collect your medications.
+        </p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="color: #3a99b7; margin-top: 0;">Pickup Details:</h3>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="margin-bottom: 10px;">📋 Bring your ID for verification</li>
+          </ul>
+        </div>
+        <p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+          If you have any questions, please contact our pharmacy department.
+        </p>
+      </div>
+      <div style="background-color: #f8f9fa; padding: 15px; text-align: center;">
+        <p style="color: #666; margin: 0; font-size: 12px;">
+          This is an automated message, please do not reply to this email.
+        </p>
+      </div>
+    </div>
+  `;
+
+      const textContent =
+        "Your prescription is ready for pickup. Please visit the pharmacy to collect it. Location: Hospital Pharmacy, Hours: 8:00 AM - 8:00 PM";
+
+      await sendEmail(
+        updatedPrescription.patient.email,
+        "Prescription Ready for Pickup",
+        textContent,
+        htmlContent
+      );
+    }
+
     
+
+    return res.status(200).json(updatedPrescription);
   } catch (error) {
     res.status(500).json({ error: error.message });
     

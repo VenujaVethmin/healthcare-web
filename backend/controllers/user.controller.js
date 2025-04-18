@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { sendEmail } from "../lib/sendEmail.js";
+import cron from "node-cron";
 
 const prisma = new PrismaClient();
 
@@ -292,6 +294,8 @@ export const bookAppointment = async (req, res) => {
   try {
     const { date, doctorId } = req.body;
 
+  
+
     // Validate required fields
     if (!date || !doctorId) {
       return res.status(400).json({ error: "Date and doctorId are required" });
@@ -299,6 +303,7 @@ export const bookAppointment = async (req, res) => {
 
     // Use authenticated user's ID when available
     const patientId = req.user.id;
+   
 
     // Parse and validate date
     const dateObj = new Date(date); // assume this is in ISO string format
@@ -410,7 +415,112 @@ export const bookAppointment = async (req, res) => {
         date: dateObj,
         time: appointmentTime,
       },
+      include:{
+        patient:{
+          select:{
+            email:true,
+            name:true,
+          }
+        },
+        doctor:{
+          select:{
+            name:true,
+            doctorBookingDetails:{
+              select:{
+                room:true,
+              }
+            }
+          }
+        }
+      }
     });
+
+//////////////////////////////////////
+
+
+
+
+const time = new Date(newAppointment.time);
+    const scheduledUTC = new Date(time.getTime() - 20 * 60 * 1000);
+  
+
+    let emailSent = false;
+
+    cron.schedule("* * * * *", () => {
+      const now = new Date();
+
+      const match =
+        now.getUTCFullYear() === scheduledUTC.getUTCFullYear() &&
+        now.getUTCMonth() === scheduledUTC.getUTCMonth() &&
+        now.getUTCDate() === scheduledUTC.getUTCDate() &&
+        now.getUTCHours() === scheduledUTC.getUTCHours() &&
+        now.getUTCMinutes() === scheduledUTC.getUTCMinutes();
+
+      if (match && !emailSent) {
+        console.log("⏰ Time matched! Sending email...");
+
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #3a99b7; padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">Appointment Reminder</h1>
+            </div>
+            <div style="padding: 20px; border: 1px solid #eee;">
+              <p style="font-size: 16px; color: #333;">Dear Venuja,</p>
+              <p style="font-size: 16px; line-height: 1.5; color: #444;">
+                This is a reminder for your upcoming appointment today.
+              </p>
+              <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h3 style="color: #3a99b7; margin-top: 0;">Appointment Details:</h3>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                  <li style="margin-bottom: 10px;">🗓️ Date: ${scheduledUTC.toLocaleDateString()}</li>
+                  <li style="margin-bottom: 10px;">⏰ Time: 9:00 AM - 9:30 AM</li>
+                  <li style="margin-bottom: 10px;">👨‍⚕️ Doctor: Dr. Smith</li>
+                  <li style="margin-bottom: 10px;">📍 Location: Room 205</li>
+                </ul>
+              </div>
+              <p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                Please arrive 5 minutes before your scheduled time.
+              </p>
+            </div>
+            <div style="background-color: #f8f9fa; padding: 15px; text-align: center;">
+              <p style="color: #666; margin: 0; font-size: 12px;">
+                If you need to reschedule, please contact us as soon as possible.
+              </p>
+            </div>
+          </div>
+        `;
+
+        const textContent = `
+          Dear ${newAppointment.patient.name},
+
+          This is a reminder for your upcoming appointment today.
+
+          Appointment Details:
+          - Date: ${scheduledUTC.toLocaleDateString()}
+          - Time: ${newAppointment.time.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          - Doctor: Dr. ${newAppointment.doctor.name}
+          - Location: ${newAppointment.doctor.doctorBookingDetails.room}
+
+          Please arrive 5 minutes before your scheduled time.
+
+          If you need to reschedule, please contact us as soon as possible.
+        `;
+
+        sendEmail(
+          newAppointment.patient.email,
+          "Your Appointment Today",
+          textContent,
+          htmlContent
+        );
+
+        emailSent = true;
+      }
+    });
+
+
 
     return res.status(201).json({
       success: true,
