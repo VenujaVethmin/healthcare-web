@@ -1,12 +1,10 @@
 import cron from "node-cron";
 import { sendEmail } from "../lib/sendEmail.js";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 export const test = async (req, res) => {
   try {
-    const time = new Date("2025-04-18T16:58:00.000Z");
+    const time = new Date("2025-04-22T14:18:00.000Z");
     const scheduledUTC = new Date(time.getTime() - 20 * 60 * 1000);
   
 

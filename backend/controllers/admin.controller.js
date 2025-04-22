@@ -311,6 +311,15 @@ export const deleteDoctorData = async (req ,res) => {
       where: { userId: doctorId },
     });
 
+    await prisma.user.update(
+      {
+        where: { id: doctorId },
+        data: {
+          role: "PATIENT", // Change role to PATIENT
+        }, // Change role to PATIENT
+      }
+    )
+
     return res.status(200).json({ message: "Doctor profile and booking details deleted successfully." }); 
 
     console.log("Doctor profile and booking details deleted successfully.");

@@ -7,6 +7,31 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 
+// Add this CSS for the spinner (you can place it in your CSS file or a <style> tag)
+const spinnerStyle = `
+  .spinner {
+    display: inline-block;
+    border: 2px solid #fff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.75s linear infinite;
+    margin-right: 8px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+// Inject the spinner CSS (if not using a separate CSS file)
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = spinnerStyle;
+  document.head.appendChild(styleSheet);
+}
+
 const fetcher = (url) => axiosInstance.get(url).then((res) => res.data);
 
 export default function PharmacistDashboard() {
@@ -14,6 +39,7 @@ export default function PharmacistDashboard() {
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState({}); // Track loading state for each prescription
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -36,7 +62,13 @@ export default function PharmacistDashboard() {
   };
 
   const handleStatusChange = async (prescriptionId, newStatus) => {
+    // Prevent action if already loading
+    if (loading[prescriptionId]) return;
+
     try {
+      // Set loading state for this prescription
+      setLoading((prev) => ({ ...prev, [prescriptionId]: true }));
+
       const res = await axiosInstance.put(
         `/pharmacist/pstatus/${prescriptionId}`,
         {
@@ -45,7 +77,6 @@ export default function PharmacistDashboard() {
       );
 
       if (res.status === 200) {
-       
         toast.success("Status updated successfully");
         setPrescriptions(
           prescriptions.map((prescription) =>
@@ -57,8 +88,10 @@ export default function PharmacistDashboard() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Failed to update  status");
-      
+      toast.error("Failed to update status");
+    } finally {
+      // Clear loading state
+      setLoading((prev) => ({ ...prev, [prescriptionId]: false }));
     }
   };
 
@@ -178,9 +211,17 @@ export default function PharmacistDashboard() {
                         onClick={() =>
                           handleStatusChange(item.prescriptions.id, "READY")
                         }
-                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                        disabled={loading[item.prescriptions.id]}
+                        className={`px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center ${
+                          loading[item.prescriptions.id]
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                         aria-label="Mark as Ready"
                       >
+                        {loading[item.prescriptions.id] && (
+                          <span className="spinner"></span>
+                        )}
                         Mark Ready
                       </button>
                     )}
@@ -189,9 +230,17 @@ export default function PharmacistDashboard() {
                         onClick={() =>
                           handleStatusChange(item.prescriptions.id, "COMPLETED")
                         }
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                        disabled={loading[item.prescriptions.id]}
+                        className={`px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center ${
+                          loading[item.prescriptions.id]
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                         aria-label="Mark as Completed"
                       >
+                        {loading[item.prescriptions.id] && (
+                          <span className="spinner"></span>
+                        )}
                         Complete
                       </button>
                     )}

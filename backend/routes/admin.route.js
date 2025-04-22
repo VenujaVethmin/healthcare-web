@@ -16,7 +16,7 @@ adminRoute.post("/changeRole", makeDoctor);
 adminRoute.put("/updatePublishStatus/:id", updatePublishStatus);
 adminRoute.put("/updateDoctorSchedule/:id", updateDoctorSchedule);;
 
-adminRoute.post("/deleteDoctor/:doctorId", deleteDoctorData);
+adminRoute.delete("/deleteDoctor/:doctorId", deleteDoctorData);
 
 
 

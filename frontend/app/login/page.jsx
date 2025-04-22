@@ -76,7 +76,7 @@ export default function LoginPage() {
         Cookies.set("token", response.data.token, {
           expires: 1, // expires in 1 day
           secure: true,
-          sameSite: "Strict",
+          sameSite: "none",
           path: "/",
         });
         router.push("/redirect");

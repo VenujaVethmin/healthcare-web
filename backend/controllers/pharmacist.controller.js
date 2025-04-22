@@ -129,6 +129,13 @@ export const pStatusChange = async (req,res)=>{
         patient: {
           select: {
             email: true,
+            name: true,
+          },
+        },
+
+        doctor: {
+          select: {
+            name: true,
           },
         },
       },
@@ -143,9 +150,9 @@ export const pStatusChange = async (req,res)=>{
         <h1 style="color: white; margin: 0;">Prescription Ready</h1>
       </div>
       <div style="padding: 20px; border: 1px solid #eee;">
-        <p style="font-size: 16px; color: #333;">Dear Patient,</p>
+        <p style="font-size: 16px; color: #333;">Hi ${updatedPrescription.patient.name},</p>
         <p style="font-size: 16px; line-height: 1.5; color: #444;">
-          Your prescription is ready for pickup at our pharmacy. Please visit us during our operating hours to collect your medications.
+          Your prescription by Dr.${updatedPrescription.doctor.name} is ready for pickup at our pharmacy. Please visit us during our operating hours to collect your medications.
         </p>
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <h3 style="color: #3a99b7; margin-top: 0;">Pickup Details:</h3>

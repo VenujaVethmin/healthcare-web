@@ -292,9 +292,11 @@ export const getUserBooking = async (req, res) => {
 
 export const bookAppointment = async (req, res) => {
   try {
-    const { date, doctorId } = req.body;
+    // const { date, doctorId } = req.body;
 
-  
+    const date = "2025-04-22T14:18:00.000Z"
+
+    const doctorId = "cm9ik38po0000ibqgmf21gbcz";
 
     // Validate required fields
     if (!date || !doctorId) {
@@ -302,8 +304,11 @@ export const bookAppointment = async (req, res) => {
     }
 
     // Use authenticated user's ID when available
-    const patientId = req.user.id;
-   
+    // const patientId = req.user.id;
+
+    const patientId = "cm9ik5vpi0000ib544xvnwlnn";
+
+    
 
     // Parse and validate date
     const dateObj = new Date(date); // assume this is in ISO string format
@@ -352,11 +357,11 @@ export const bookAppointment = async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    if (!doctorDetails.workingHours.length) {
-      return res.status(400).json({
-        error: "Doctor is not available on this day",
-      });
-    }
+    // if (!doctorDetails.workingHours.length) {
+    //   return res.status(400).json({
+    //     error: "Doctor is not available on this day",
+    //   });
+    // }
     const maxPatients = parseInt(doctorDetails.maxPatientsPerDay, 10);
     if (!maxPatients || maxPatients <= 0) {
       return res.status(500).json({
@@ -415,34 +420,32 @@ export const bookAppointment = async (req, res) => {
         date: dateObj,
         time: appointmentTime,
       },
-      include:{
-        patient:{
-          select:{
-            email:true,
-            name:true,
-          }
+      include: {
+        patient: {
+          select: {
+            email: true,
+            name: true,
+          },
         },
-        doctor:{
-          select:{
-            name:true,
-            doctorBookingDetails:{
-              select:{
-                room:true,
-              }
-            }
-          }
-        }
-      }
+        doctor: {
+          select: {
+            name: true,
+            doctorBookingDetails: {
+              select: {
+                room: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-//////////////////////////////////////
+    //////////////////////////////////////
 
+    
 
-
-
-const time = new Date(newAppointment.time);
+    const time = new Date(newAppointment.time);
     const scheduledUTC = new Date(time.getTime() - 20 * 60 * 1000);
-  
 
     let emailSent = false;
 
@@ -458,56 +461,55 @@ const time = new Date(newAppointment.time);
 
       if (match && !emailSent) {
         console.log("⏰ Time matched! Sending email...");
+const htmlContent = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #3a99b7; padding: 20px; text-align: center;">
+      <h1 style="color: white; margin: 0;">Appointment Reminder</h1>
+    </div>
+    <div style="padding: 20px; border: 1px solid #eee;">
+      <p style="font-size: 16px; color: #333;">Dear ${newAppointment.patient.name},</p>
+      <p style="font-size: 16px; line-height: 1.5; color: #444;">
+        This is a reminder for your upcoming appointment today.
+      </p>
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="color: #3a99b7; margin-top: 0;">Appointment Details:</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;">🗓️ Date: ${newAppointment.date.toLocaleDateString()}</li>
+          <li style="margin-bottom: 10px;">⏰ Time: ${newAppointment.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</li>
+          <li style="margin-bottom: 10px;">👨‍⚕️ Doctor: Dr. ${newAppointment.doctor.name}</li>
+          <li style="margin-bottom: 10px;">📍 Location: ${newAppointment.doctor.doctorBookingDetails.room}</li>
+        </ul>
+      </div>
+      <p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+        Please arrive 5 minutes before your scheduled time.
+      </p>
+    </div>
+    <div style="background-color: #f8f9fa; padding: 15px; text-align: center;">
+      <p style="color: #666; margin: 0; font-size: 12px;">
+        If you need to reschedule, please contact us as soon as possible.
+      </p>
+    </div>
+  </div>
+`;
 
-        const htmlContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #3a99b7; padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">Appointment Reminder</h1>
-            </div>
-            <div style="padding: 20px; border: 1px solid #eee;">
-              <p style="font-size: 16px; color: #333;">Dear Venuja,</p>
-              <p style="font-size: 16px; line-height: 1.5; color: #444;">
-                This is a reminder for your upcoming appointment today.
-              </p>
-              <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3 style="color: #3a99b7; margin-top: 0;">Appointment Details:</h3>
-                <ul style="list-style: none; padding: 0; margin: 0;">
-                  <li style="margin-bottom: 10px;">🗓️ Date: ${scheduledUTC.toLocaleDateString()}</li>
-                  <li style="margin-bottom: 10px;">⏰ Time: 9:00 AM - 9:30 AM</li>
-                  <li style="margin-bottom: 10px;">👨‍⚕️ Doctor: Dr. Smith</li>
-                  <li style="margin-bottom: 10px;">📍 Location: Room 205</li>
-                </ul>
-              </div>
-              <p style="font-size: 14px; color: #666; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
-                Please arrive 5 minutes before your scheduled time.
-              </p>
-            </div>
-            <div style="background-color: #f8f9fa; padding: 15px; text-align: center;">
-              <p style="color: #666; margin: 0; font-size: 12px;">
-                If you need to reschedule, please contact us as soon as possible.
-              </p>
-            </div>
-          </div>
-        `;
 
-        const textContent = `
-          Dear ${newAppointment.patient.name},
+const textContent = `
+          Dear Venuja,
 
           This is a reminder for your upcoming appointment today.
 
           Appointment Details:
           - Date: ${scheduledUTC.toLocaleDateString()}
-          - Time: ${newAppointment.time.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-          - Doctor: Dr. ${newAppointment.doctor.name}
-          - Location: ${newAppointment.doctor.doctorBookingDetails.room}
+          - Time: 9:00 AM - 9:30 AM
+          - Doctor: Dr. Smith
+          - Location: Room 205
 
           Please arrive 5 minutes before your scheduled time.
 
           If you need to reschedule, please contact us as soon as possible.
         `;
+
+
 
         sendEmail(
           newAppointment.patient.email,
@@ -519,8 +521,6 @@ const time = new Date(newAppointment.time);
         emailSent = true;
       }
     });
-
-
 
     return res.status(201).json({
       success: true,
