@@ -292,11 +292,9 @@ export const getUserBooking = async (req, res) => {
 
 export const bookAppointment = async (req, res) => {
   try {
-    // const { date, doctorId } = req.body;
+    const { date, doctorId } = req.body;
 
-    const date = "2025-04-22T14:18:00.000Z"
-
-    const doctorId = "cm9ik38po0000ibqgmf21gbcz";
+    
 
     // Validate required fields
     if (!date || !doctorId) {
@@ -304,9 +302,9 @@ export const bookAppointment = async (req, res) => {
     }
 
     // Use authenticated user's ID when available
-    // const patientId = req.user.id;
+    const patientId = req.user.id;
 
-    const patientId = "cm9ik5vpi0000ib544xvnwlnn";
+  
 
     
 
