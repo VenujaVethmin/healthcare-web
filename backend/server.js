@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(
   cors({
     credentials: true,
-    origin: process.env.NEXT_PUBLIC_FRONTEND_URL,
+    origin: [process.env.NEXT_PUBLIC_FRONTEND_URL, "http://localhost:3000"],
   })
 );
 
