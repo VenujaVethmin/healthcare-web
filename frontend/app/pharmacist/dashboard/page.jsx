@@ -198,8 +198,9 @@ export default function PharmacistDashboard() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-medium text-lg">{item.patient.name}</h3>
+                    
                     <p className="text-[#82889c]">
-                      Prescribed by: {item.doctor.name}
+                      Prescribed by: Dr.{item.doctor.name}
                     </p>
                     <p className="text-[#82889c]">
                       Date: {new Date(item.date).toLocaleDateString()}
