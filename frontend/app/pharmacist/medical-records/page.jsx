@@ -107,15 +107,14 @@ export default function PharmacistRecords() {
         formData
       );
 
-      if (res.data && res.data._id) {
+      if (res.status === 200) {
+        toast.success("File uploaded successfully");
         const newRecord = res.data;
         setRecords((prev) => [newRecord, ...prev]);
         setSelectedFile(null);
         setRecordName("");
-        toast.success("uploaded");
-      } else {
-        throw new Error("Invalid response from server");
-      }
+        
+      } 
     } catch (err) {
       setError(err.response?.data?.message || "Error uploading image");
       console.error("Error during file upload:", err);
@@ -261,7 +260,7 @@ export default function PharmacistRecords() {
               {records && records.length > 0 ? (
                 records.map((record) => (
                   <motion.div
-                    key={record._id || record.id}
+                    key={record.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="border border-gray-200 rounded-lg p-4 hover:border-[#3a99b7] transition-colors"
@@ -276,15 +275,11 @@ export default function PharmacistRecords() {
                             <h3 className="font-medium text-[#232323]">
                               {record.name}
                             </h3>
-                            <p className="text-sm text-[#82889c]">
-                              {record.fileName}
-                            </p>
-                            <p className="text-sm text-[#82889c]">
-                              Size: {record.fileSize}
-                            </p>
+                            
+                            
                           </div>
                           <a
-                            href={record.fileUrl}
+                            href={record.link}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-4 py-2 text-sm text-[#3a99b7] hover:bg-[#3a99b7]/10 rounded-lg transition-colors"
@@ -296,7 +291,7 @@ export default function PharmacistRecords() {
                           <div className="flex items-center gap-2 text-sm text-[#82889c]">
                             <Calendar className="w-4 h-4" />
                             <span>
-                              {new Date(record.uploadDate).toLocaleDateString()}
+                              {new Date(record.createdAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
