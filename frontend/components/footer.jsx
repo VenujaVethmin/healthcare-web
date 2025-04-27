@@ -1,19 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
 import {
-  Phone,
+  ChevronRight, // Corrected from LinkedIn
+  Clock,
+  Facebook, // Use X instead of Twitter for lucide-react
+  Instagram,
+  Linkedin,
   Mail,
   MapPin,
-  Facebook,
-  X, // Use X instead of Twitter for lucide-react
-  Instagram,
-  Linkedin, // Corrected from LinkedIn
-  Clock,
-  ChevronRight,
-  Heart,
+  Phone,
+  X
 } from "lucide-react";
+import Link from "next/link";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -24,7 +22,7 @@ const Footer = () => {
       { label: "Book Appointment", href: "/user/book-appointment" },
       { label: "Medical Records", href: "/user/medical-records" },
       { label: "Prescriptions", href: "/user/prescriptions" },
-      { label: "Lab Reports", href: "/user/lab-reports" },
+      { label: "Lab Reports", href: "/user/medical-records" },
     ],
     company: [
       { label: "About Us", href: "/about" },
