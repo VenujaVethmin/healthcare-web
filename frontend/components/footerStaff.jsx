@@ -13,17 +13,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const Footer = () => {
+const FooterStaff = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
-    services: [
-      { label: "Find a Doctor", href: "/user/find-doctors" },
-      { label: "Book Appointment", href: "/user/find-doctors" },
-      { label: "Medical Records", href: "/user/medical-records" },
-      { label: "Prescriptions", href: "/user/prescriptions" },
-      { label: "Lab Reports", href: "/user/medical-records" },
-    ],
     company: [
       { label: "About Us", href: "/about" },
       { label: "Our Team", href: "/team" },
@@ -189,4 +182,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default FooterStaff;
