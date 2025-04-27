@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, Phone, Globe, Award } from "lucide-react";
+import { Award, Mail, Phone } from "lucide-react";
 import Image from "next/image";
 
 export default function Team() {

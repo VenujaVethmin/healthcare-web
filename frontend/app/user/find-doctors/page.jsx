@@ -200,7 +200,7 @@ export default function DoctorsPage() {
                       <div className="space-y-2">
                         <div>
                           <h3 className="text-lg font-medium text-[#232323]">
-                            {doctor.name}
+                          Dr.  {doctor.name}
                           </h3>
                           <p className="text-sm text-[#7a7d84]">
                             {doctor.doctorBookingDetails.specialty}
