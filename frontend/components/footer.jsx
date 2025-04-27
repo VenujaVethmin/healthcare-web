@@ -19,7 +19,7 @@ const Footer = () => {
   const footerLinks = {
     services: [
       { label: "Find a Doctor", href: "/user/find-doctors" },
-      { label: "Book Appointment", href: "/user/book-appointment" },
+      { label: "Book Appointment", href: "/user/find-doctors" },
       { label: "Medical Records", href: "/user/medical-records" },
       { label: "Prescriptions", href: "/user/prescriptions" },
       { label: "Lab Reports", href: "/user/medical-records" },
