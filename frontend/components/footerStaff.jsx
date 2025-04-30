@@ -18,18 +18,18 @@ const FooterStaff = () => {
 
   const footerLinks = {
     company: [
-      { label: "About Us", href: "/about" },
-      { label: "Our Team", href: "/team" },
-      { label: "Careers", href: "/careers" },
-      { label: "News & Media", href: "/news" },
-      { label: "Contact Us", href: "/contact" },
+      { label: "About Us", href: "/info/about" },
+      { label: "Our Team", href: "/info/team" },
+      { label: "Careers", href: "/info/careers" },
+      { label: "News & Media", href: "/info/news" },
+      { label: "Contact Us", href: "/info/contact" },
     ],
     resources: [
-      { label: "Health Blog", href: "/blog" },
-      { label: "FAQs", href: "/faqs" },
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Support Center", href: "/help-support" },
+      { label: "Health Blog", href: "/info/blog" },
+      { label: "FAQs", href: "/info/faqs" },
+      { label: "Privacy Policy", href: "/info/privacy" },
+      { label: "Terms of Service", href: "/info/terms" },
+      { label: "Support Center", href: "/info/help-support" },
     ],
   };
 

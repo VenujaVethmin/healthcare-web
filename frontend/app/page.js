@@ -8,6 +8,7 @@ import { useState } from "react";
 import useSession from "@/hooks/session";
 import { useRouter } from "next/navigation";
 import { logOut } from "@/hooks/auth-hooks";
+import FooterStaff from "@/components/footerStaff";
 
 export default function Hero() {
   const router = useRouter();
@@ -51,12 +52,7 @@ export default function Hero() {
       label: "Dashboard",
       href: "/user/dashboard",
       icon: User,
-    },
-    {
-      label: "My Profile",
-      href: "/user/profile",
-      icon: User,
-    },
+    }
   ];
 
   return (
@@ -384,6 +380,7 @@ export default function Hero() {
           </div>
         </div>
       </div>
+       <FooterStaff/>
     </div>
   );
 }
