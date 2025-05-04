@@ -206,7 +206,12 @@ export const getUserBooking = async (req, res) => {
     }
 
     const dateObj = new Date(date);
-    const dayOfWeek = dateObj.getDay();
+
+    const utcTime = dateObj.getTime();
+
+    const slTime = new Date(utcTime + 5.5 * 60 * 60 * 1000);
+
+    const dayOfWeek = slTime.getDay();
     const daysOfWeek = [
       "SUNDAY",
       "MONDAY",
